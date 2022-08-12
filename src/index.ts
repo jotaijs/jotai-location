@@ -1,0 +1,1 @@
+export { atomWithLocation } from './atomWithLocation';
