@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "jotai": "latest",
+    "jotai-location": "latest",
     "react": "latest",
     "react-dom": "latest",
     "react-scripts": "latest"
