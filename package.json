@@ -77,7 +77,6 @@
     "webpack-dev-server": "^4.10.0"
   },
   "peerDependencies": {
-    "jotai": "*",
-    "react": ">=17.0.0"
+    "jotai": "*"
   }
 }
