@@ -1,11 +1,11 @@
 // TODO consider refactoring without atomWithStorage
 
-import type { WritableAtom } from 'jotai';
+import type { WritableAtom } from 'jotai/vanilla';
 import {
   atomWithStorage,
   unstable_NO_STORAGE_VALUE as NO_STORAGE_VALUE,
   RESET,
-} from 'jotai/utils';
+} from 'jotai/vanilla/utils';
 
 type SetStateActionWithReset<Value> =
   | Value
@@ -18,11 +18,10 @@ export function atomWithHash<Value>(
   options?: {
     serialize?: (val: Value) => string;
     deserialize?: (str: string | null) => Value | typeof NO_STORAGE_VALUE;
-    delayInit?: boolean;
     replaceState?: boolean;
     subscribe?: (callback: () => void) => () => void;
   },
-): WritableAtom<Value, SetStateActionWithReset<Value>> {
+): WritableAtom<Value, [SetStateActionWithReset<Value>], void> {
   const serialize = options?.serialize || JSON.stringify;
   const deserialize =
     options?.deserialize ||
@@ -73,7 +72,6 @@ export function atomWithHash<Value>(
       searchParams.delete(k);
       setHash(searchParams);
     },
-    ...(options?.delayInit && { delayInit: true }),
     subscribe: (k: string, setValue: (v: Value) => void) => {
       const callback = () => {
         const searchParams = new URLSearchParams(window.location.hash.slice(1));

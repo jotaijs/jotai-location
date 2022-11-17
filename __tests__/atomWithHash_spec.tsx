@@ -1,6 +1,6 @@
 import React, { StrictMode } from 'react';
 import { fireEvent, render, waitFor } from '@testing-library/react';
-import { useAtom } from 'jotai';
+import { useAtom } from 'jotai/react';
 import { RESET } from 'jotai/utils';
 import { atomWithHash } from '../src/index';
 
