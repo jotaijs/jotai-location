@@ -21,6 +21,7 @@ export function atomWithHash<Value>(
     delayInit?: boolean;
     replaceState?: boolean;
     subscribe?: (callback: () => void) => () => void;
+    setHash?: (searchParams: URLSearchParams) => void;
   },
 ): WritableAtom<Value, SetStateActionWithReset<Value>> {
   const serialize = options?.serialize || JSON.stringify;
@@ -41,19 +42,21 @@ export function atomWithHash<Value>(
         window.removeEventListener('hashchange', callback);
       };
     });
-  const setHash = (searchParams: URLSearchParams) => {
-    if (options?.replaceState) {
-      window.history.replaceState(
-        null,
-        '',
-        `${window.location.pathname}${
-          window.location.search
-        }#${searchParams.toString()}`,
-      );
-    } else {
-      window.location.hash = searchParams.toString();
-    }
-  };
+  const setHash =
+    options?.setHash ||
+    ((searchParams) => {
+      if (options?.replaceState) {
+        window.history.replaceState(
+          null,
+          '',
+          `${window.location.pathname}${
+            window.location.search
+          }#${searchParams.toString()}`,
+        );
+      } else {
+        window.location.hash = searchParams.toString();
+      }
+    });
   const hashStorage = {
     getItem: (k: string) => {
       if (typeof window.location === 'undefined') {
