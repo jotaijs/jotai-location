@@ -45,6 +45,9 @@ export function atomWithHash<Value>(
         window.removeEventListener('hashchange', callback);
       };
     });
+  if (options?.replaceState) {
+    console.warn('[DEPRECATED] Use setHash=replaceState instead');
+  }
   const setHashOption = options?.setHash;
   let setHash = (searchParams: string) => {
     window.location.hash = searchParams;
