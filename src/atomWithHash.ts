@@ -18,8 +18,12 @@ export function atomWithHash<Value>(
   options?: {
     serialize?: (val: Value) => string;
     deserialize?: (str: string | null) => Value | typeof NO_STORAGE_VALUE;
+    /**
+     * @deprecated Use {@link options.setHash} with 'replaceState' instead
+     */
     replaceState?: boolean;
     subscribe?: (callback: () => void) => () => void;
+    setHash?: 'default' | 'replaceState' | ((searchParams: string) => void);
   },
 ): WritableAtom<Value, [SetStateActionWithReset<Value>], void> {
   const serialize = options?.serialize || JSON.stringify;
@@ -40,19 +44,25 @@ export function atomWithHash<Value>(
         window.removeEventListener('hashchange', callback);
       };
     });
-  const setHash = (searchParams: URLSearchParams) => {
-    if (options?.replaceState) {
+  if (options?.replaceState) {
+    console.warn('[DEPRECATED] Use setHash=replaceState instead');
+  }
+  const setHashOption = options?.setHash;
+  let setHash = (searchParams: string) => {
+    window.location.hash = searchParams;
+  };
+  if (setHashOption === 'replaceState' || options?.replaceState) {
+    setHash = (searchParams) => {
       window.history.replaceState(
         null,
         '',
-        `${window.location.pathname}${
-          window.location.search
-        }#${searchParams.toString()}`,
+        `${window.location.pathname}${window.location.search}#${searchParams}`,
       );
-    } else {
-      window.location.hash = searchParams.toString();
-    }
-  };
+    };
+  }
+  if (typeof setHashOption === 'function') {
+    setHash = setHashOption;
+  }
   const hashStorage = {
     getItem: (k: string) => {
       if (typeof window.location === 'undefined') {
@@ -65,12 +75,12 @@ export function atomWithHash<Value>(
     setItem: (k: string, newValue: Value) => {
       const searchParams = new URLSearchParams(window.location.hash.slice(1));
       searchParams.set(k, serialize(newValue));
-      setHash(searchParams);
+      setHash(searchParams.toString());
     },
     removeItem: (k: string) => {
       const searchParams = new URLSearchParams(window.location.hash.slice(1));
       searchParams.delete(k);
-      setHash(searchParams);
+      setHash(searchParams.toString());
     },
     subscribe: (k: string, setValue: (v: Value) => void) => {
       const callback = () => {
