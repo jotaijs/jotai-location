@@ -66,7 +66,7 @@ export function atomWithHash<Value>(
   }
   const hashStorage = {
     getItem: (k: string) => {
-      if (typeof window.location === 'undefined') {
+      if (typeof window === 'undefined' || !window.location) {
         return NO_STORAGE_VALUE;
       }
       const searchParams = new URLSearchParams(window.location.hash.slice(1));
