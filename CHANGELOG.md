@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.3.1] - 2022-12-22
+### Changed
+- fix: atomWithHash without window #5
+
 ## [0.3.0] - 2022-12-01
 ### Added
 - feat(atom-with-hash): allow optional setHash #4
