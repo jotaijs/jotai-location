@@ -130,3 +130,18 @@ describe('atomWithHash', () => {
     });
   });
 });
+
+describe('atomWithHash without window', () => {
+  let savedWindow: any;
+  beforeEach(() => {
+    savedWindow = global.window;
+    delete (global as any).window;
+  });
+  afterEach(() => {
+    global.window = savedWindow;
+  });
+
+  it('define atomWithHash', async () => {
+    atomWithHash('count', 1);
+  });
+});
