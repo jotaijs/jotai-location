@@ -28,15 +28,25 @@ export function atomWithHash<Value>(
   },
 ): WritableAtom<Value, SetStateActionWithReset<Value>> {
   const serialize = options?.serialize || JSON.stringify;
+
+  let cachedStr: string | undefined = serialize(initialValue);
+  let cachedValue: any = initialValue;
+
   const deserialize =
     options?.deserialize ||
     ((str) => {
-      try {
-        return JSON.parse(str || '');
-      } catch {
-        return NO_STORAGE_VALUE;
+      str = str || '';
+      if (cachedStr !== str) {
+        try {
+          cachedValue = JSON.parse(str);
+        } catch {
+          return NO_STORAGE_VALUE;
+        }
+        cachedStr = str;
       }
+      return cachedValue;
     });
+
   const subscribe =
     options?.subscribe ||
     ((callback) => {
@@ -75,8 +85,12 @@ export function atomWithHash<Value>(
     },
     setItem: (k: string, newValue: Value) => {
       const searchParams = new URLSearchParams(window.location.hash.slice(1));
-      searchParams.set(k, serialize(newValue));
+      const serializedParamValue = serialize(newValue);
+      searchParams.set(k, serializedParamValue);
       setHash(searchParams.toString());
+      // Update local cache when setItem is called directly
+      cachedStr = serializedParamValue;
+      cachedValue = newValue;
     },
     removeItem: (k: string) => {
       const searchParams = new URLSearchParams(window.location.hash.slice(1));
