@@ -1,10 +1,15 @@
-import React, { StrictMode } from 'react';
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import React, { StrictMode, useMemo } from 'react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useAtom } from 'jotai';
 import { RESET } from 'jotai/utils';
 import { atomWithHash } from '../src/index';
 
 describe('atomWithHash', () => {
+  beforeEach(() => {
+    window.location.hash = '';
+  });
+
   it('simple count', async () => {
     const countAtom = atomWithHash('count', 1);
 
@@ -128,6 +133,58 @@ describe('atomWithHash', () => {
       expect(window.location.search).toEqual('?q=foo');
       expect(window.location.hash).toEqual('#count=2');
     });
+  });
+
+  it('should optimize value to prevent unnecessary re-renders', async () => {
+    const paramAHashAtom = atomWithHash('paramA', ['paramA']);
+    const paramBHashAtom = atomWithHash('paramB', ['paramB']);
+    const ParamInput = ({
+      paramAMockFn,
+      paramBMockFn,
+    }: {
+      paramAMockFn: jest.Mock;
+      paramBMockFn: jest.Mock;
+    }) => {
+      const [paramA, setParamA] = useAtom(paramAHashAtom);
+      const [paramB, setParamB] = useAtom(paramBHashAtom);
+
+      useMemo(paramAMockFn, [paramA]);
+      useMemo(paramBMockFn, [paramB]);
+
+      return (
+        <>
+          <input
+            value={paramA[0]}
+            onChange={(e) => setParamA([e.target.value])}
+            aria-label="a"
+          />
+          <input
+            value={paramB[0]}
+            onChange={(e) => setParamB([e.target.value])}
+            aria-label="b"
+          />
+        </>
+      );
+    };
+
+    const paramAMockFn = jest.fn();
+    const paramBMockFn = jest.fn();
+    const user = userEvent.setup();
+
+    render(
+      <StrictMode>
+        <ParamInput paramAMockFn={paramAMockFn} paramBMockFn={paramBMockFn} />
+      </StrictMode>,
+    );
+
+    await user.type(screen.getByLabelText('a'), '1');
+
+    // StrictMode in React 18 calls useMemo twice, so we're accounting for 2 extra useMemo calls
+    await waitFor(() => expect(paramAMockFn).toBeCalledTimes(4));
+    expect(paramBMockFn).toBeCalledTimes(2);
+
+    await user.type(screen.getByLabelText('b'), '1');
+    await waitFor(() => expect(paramBMockFn).toBeCalledTimes(4));
   });
 });
 
