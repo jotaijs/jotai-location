@@ -56,6 +56,7 @@ export function atomWithHash<Value>(
       };
     });
   if (options?.replaceState) {
+    // eslint-disable-next-line no-console
     console.warn('[DEPRECATED] Use setHash=replaceState instead');
   }
   const setHashOption = options?.setHash;

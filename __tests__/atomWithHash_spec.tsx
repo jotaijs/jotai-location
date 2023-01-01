@@ -94,7 +94,7 @@ describe('atomWithHash', () => {
   });
 
   it('keeping current path', async () => {
-    const countAtom = atomWithHash('count', 1, { replaceState: true });
+    const countAtom = atomWithHash('count', 1, { setHash: 'replaceState' });
 
     const Counter = () => {
       const [count, setCount] = useAtom(countAtom);
