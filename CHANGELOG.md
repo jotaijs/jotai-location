@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+### Changed
+- fix: atomWithLocation without window #8
 
 ## [0.3.2] - 2023-01-01
 ### Changed
