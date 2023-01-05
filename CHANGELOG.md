@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [0.3.3] - 2023-01-05
+### Changed
+- fix: atomWithLocation without window #8
+
+## [0.3.2] - 2023-01-01
+### Changed
+- feat(atomWithHash): optimize return value to prevent unnecessary re-renders #6
+
 ## [0.3.1] - 2022-12-22
 ### Changed
 - fix: atomWithHash without window #5

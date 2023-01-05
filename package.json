@@ -1,7 +1,7 @@
 {
   "name": "jotai-location",
   "description": "👻🔗",
-  "version": "0.3.1",
+  "version": "0.3.3",
   "author": "Daishi Kato",
   "repository": {
     "type": "git",
@@ -48,7 +48,9 @@
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
+    "@testing-library/dom": "^8.19.1",
     "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^14.4.3",
     "@types/jest": "^29.2.3",
     "@types/react": "^18.0.25",
     "@types/react-dom": "^18.0.9",

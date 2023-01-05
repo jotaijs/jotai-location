@@ -6,10 +6,15 @@ type Location = {
   searchParams?: URLSearchParams;
 };
 
-const getLocation = (): Location => ({
-  pathname: window.location.pathname,
-  searchParams: new URLSearchParams(window.location.search),
-});
+const getLocation = (): Location => {
+  if (typeof window === 'undefined' || !window.location) {
+    return {};
+  }
+  return {
+    pathname: window.location.pathname,
+    searchParams: new URLSearchParams(window.location.search),
+  };
+};
 
 const applyLocation = (
   location: Location,
