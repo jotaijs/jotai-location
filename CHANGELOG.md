@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2023-01-31
+### Added
+- Migrate to Jotai v2 API #1
+
 ## [0.3.3] - 2023-01-05
 ### Changed
 - fix: atomWithLocation without window #8
