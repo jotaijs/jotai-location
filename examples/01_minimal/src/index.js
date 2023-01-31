@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { useAtom } from 'jotai';
+import { useAtom } from 'jotai/react';
 import { atomWithLocation } from 'jotai-location';
 
 const locationAtom = atomWithLocation();

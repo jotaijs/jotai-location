@@ -1,5 +1,5 @@
-import { atom } from 'jotai';
-import type { PrimitiveAtom, SetStateAction } from 'jotai';
+import { atom } from 'jotai/vanilla';
+import type { PrimitiveAtom, SetStateAction } from 'jotai/vanilla';
 
 type Location = {
   pathname?: string;

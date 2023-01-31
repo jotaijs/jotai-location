@@ -1,8 +1,8 @@
 import React, { StrictMode, useMemo } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useAtom } from 'jotai';
-import { RESET } from 'jotai/utils';
+import { useAtom } from 'jotai/react';
+import { RESET } from 'jotai/vanilla/utils';
 import { atomWithHash } from '../src/index';
 
 describe('atomWithHash', () => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAtom } from 'jotai';
+import { useAtom } from 'jotai/react';
 import { atomWithHash } from 'jotai-location';
 
 const countAtom = atomWithHash('count', 1);
