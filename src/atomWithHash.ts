@@ -111,5 +111,11 @@ export function atomWithHash<Value>(
     },
   };
 
-  return atomWithStorage(key, initialValue, hashStorage);
+  const establishedValue = hashStorage.getItem(key);
+
+  return atomWithStorage(
+    key,
+    establishedValue === NO_STORAGE_VALUE ? initialValue : establishedValue,
+    hashStorage,
+  );
 }

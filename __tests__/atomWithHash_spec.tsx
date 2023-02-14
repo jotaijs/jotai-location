@@ -186,6 +186,34 @@ describe('atomWithHash', () => {
     await user.type(screen.getByLabelText('b'), '1');
     await waitFor(() => expect(paramBMockFn).toBeCalledTimes(4));
   });
+
+  it('initializes with existing value if it exists within the hash', async () => {
+    window.location.hash = '#count=2';
+
+    const countAtom = atomWithHash('count', 1, { setHash: 'replaceState' });
+
+    const Counter = () => {
+      const [count, setCount] = useAtom(countAtom);
+      return (
+        <>
+          <div>count: {count}</div>
+          <button type="button" onClick={() => setCount((c) => c + 1)}>
+            button
+          </button>
+        </>
+      );
+    };
+
+    const { findByText } = render(
+      <StrictMode>
+        <Counter />
+      </StrictMode>,
+    );
+
+    expect(window.location.hash).toEqual('#count=2');
+
+    await findByText('count: 2');
+  });
 });
 
 describe('atomWithHash without window', () => {
