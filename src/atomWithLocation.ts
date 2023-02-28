@@ -70,7 +70,7 @@ export function atomWithLocation<T>(options?: Options<T>) {
   baseAtom.onMount = (set) => {
     const callback = () => set(getL());
     const unsub = sub(callback);
-    callback();
+    // callback();
     return unsub;
   };
   const derivedAtom = atom(
