@@ -68,8 +68,9 @@ export function atomWithLocation<T>(options?: Options<T>) {
   const sub = options?.subscribe || subscribe;
   const baseAtom = atom(options?.preloaded ?? getL());
 
-  // FIXME Wrap this with a  dev only check, may require changes to our bundle tooling
-  baseAtom.debugPrivate = true;
+  if (process.env.NODE_ENV !== 'production') {
+    baseAtom.debugPrivate = true;
+  }
 
   baseAtom.onMount = (set) => {
     const callback = () => set(getL());
