@@ -20,7 +20,7 @@ specifiers:
   html-webpack-plugin: ^5.5.0
   jest: ^29.4.1
   jest-environment-jsdom: ^29.4.1
-  jotai: ^2.0.0
+  jotai: ^2.0.3
   microbundle: ^0.15.1
   npm-run-all: ^4.1.5
   prettier: ^2.8.3
@@ -54,7 +54,7 @@ devDependencies:
   html-webpack-plugin: 5.5.0_webpack@5.75.0
   jest: 29.4.3_@types+node@18.14.1
   jest-environment-jsdom: 29.4.3
-  jotai: 2.0.2_react@18.2.0
+  jotai: 2.0.3_react@18.2.0
   microbundle: 0.15.1
   npm-run-all: 4.1.5
   prettier: 2.8.4
@@ -5587,8 +5587,8 @@ packages:
       - ts-node
     dev: true
 
-  /jotai/2.0.2_react@18.2.0:
-    resolution: {integrity: sha512-0yOked08Swa84LUbBjtj7ZLZrE05n3u50rHeZ+bsT86thUjcy0kFgQz9GmEWhYbQDFoT1G8Ww6edSj/MBJHO4A==}
+  /jotai/2.0.3_react@18.2.0:
+    resolution: {integrity: sha512-MMjhSPAL3RoeZD9WbObufRT2quThEAEknHHridf2ma8Ml7ZVQmUiHk0ssdbR3F0h3kcwhYqSGJ59OjhPge7RRg==}
     engines: {node: '>=12.20.0'}
     peerDependencies:
       react: '>=17.0.0'

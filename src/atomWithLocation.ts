@@ -67,6 +67,11 @@ export function atomWithLocation<T>(options?: Options<T>) {
     (applyLocation as unknown as NonNullable<Options<T>['applyLocation']>);
   const sub = options?.subscribe || subscribe;
   const baseAtom = atom(options?.preloaded ?? getL());
+
+  if (process.env.NODE_ENV !== 'production') {
+    baseAtom.debugPrivate = true;
+  }
+
   baseAtom.onMount = (set) => {
     const callback = () => set(getL());
     const unsub = sub(callback);
