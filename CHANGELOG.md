@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.5.1] - 2023-03-11
+### Changed
+- refactor: atomWithHash #13
+
 ## [0.5.0] - 2023-03-03
 ### Added
 - feat: mark internal atoms as private
