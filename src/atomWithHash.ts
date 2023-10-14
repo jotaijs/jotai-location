@@ -34,7 +34,7 @@ export function atomWithHash<Value>(
   if (setHashOption === 'replaceState') {
     setHash = (searchParams) => {
       window.history.replaceState(
-        null,
+        window.history.state,
         '',
         `${window.location.pathname}${window.location.search}#${searchParams}`,
       );
