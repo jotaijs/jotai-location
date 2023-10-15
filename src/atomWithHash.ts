@@ -7,6 +7,14 @@ type SetStateActionWithReset<Value> =
   | typeof RESET
   | ((prev: Value) => Value | typeof RESET);
 
+const safeJSONParse = (initialValue: unknown) => (str: string) => {
+  try {
+    return JSON.parse(str);
+  } catch (e) {
+    return initialValue;
+  }
+};
+
 export function atomWithHash<Value>(
   key: string,
   initialValue: Value,
@@ -18,7 +26,7 @@ export function atomWithHash<Value>(
   },
 ): WritableAtom<Value, [SetStateActionWithReset<Value>], void> {
   const serialize = options?.serialize || JSON.stringify;
-  const deserialize = options?.deserialize || JSON.parse;
+  const deserialize = options?.deserialize || safeJSONParse(initialValue);
   const subscribe =
     options?.subscribe ||
     ((callback) => {

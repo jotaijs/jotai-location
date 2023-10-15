@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+### Changed
+- fix(atomWithHash): default safeJSONParse #22
 
 ## [0.5.1] - 2023-03-11
 ### Changed
