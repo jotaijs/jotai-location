@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+
+## [0.5.2] - 2023-10-15
 ### Changed
 - fix(atomWithHash): default safeJSONParse #22
 - fix(atomWithHash): replaceState function to use window.history.state instead of null #24
