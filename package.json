@@ -34,7 +34,8 @@
     "tsc-test": "tsc --project . --noEmit",
     "examples:01_minimal": "DIR=01_minimal EXT=js webpack serve",
     "examples:02_typescript": "DIR=02_typescript EXT=tsx webpack serve",
-    "examples:03_hash": "DIR=03_hash EXT=tsx webpack serve"
+    "examples:03_hash": "DIR=03_hash EXT=tsx webpack serve",
+    "examples:04_react_router": "DIR=04_react_router EXT=js webpack serve"
   },
   "jest": {
     "testEnvironment": "jsdom",
