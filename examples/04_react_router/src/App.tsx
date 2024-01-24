@@ -1,0 +1,55 @@
+import {
+  unstable_HistoryRouter as BrowserRouter,
+  Routes,
+  Route,
+  Link,
+} from 'react-router-dom';
+import { atomWithLocation } from 'jotai-location';
+import { useAtomValue } from 'jotai';
+import * as React from 'react';
+import history from './routerHistory';
+
+const Route1 = <h1>Hello</h1>;
+const Route2 = <h1>World</h1>;
+const location = atomWithLocation();
+location.onMount = (set) => {
+  const callback = (arg) => {
+    const searchParams = new URLSearchParams(arg.location.search);
+    const loc = { searchParams, ...arg.location };
+    set(loc);
+  };
+  const unlisten = history.listen(callback);
+  callback(history);
+  return unlisten;
+};
+
+const App = () => {
+  const loc = useAtomValue(location);
+  return (
+    <div
+      className="App"
+      style={{
+        textAlign: 'center',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px',
+      }}
+    > 
+      {/* @ts-expect-error */}
+      <BrowserRouter history={history}>
+        current pathname in atomWithLocation: &quot;{loc.pathname}&quot;
+        <div style={{ display: 'flex', gap: '16px', placeContent: 'center' }}>
+          <Link to="/1"> to 1</Link>
+          <Link to="/1/123"> to 1/123</Link>
+          <Link to="/2"> to 2</Link>
+          <Link to="/2/123"> to 2/123</Link>
+        </div>
+        <Routes>
+          <Route path="/1" element={Route1} />
+          <Route path="/2" element={Route2} />
+        </Routes>
+      </BrowserRouter>
+    </div>
+  );
+};
+export default App;
