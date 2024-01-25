@@ -1,5 +1,5 @@
 import {
-  unstable_HistoryRouter as BrowserRouter,
+  unstable_HistoryRouter as UNSTABLE_HistoryRouter,
   Routes,
   Route,
   Link,
@@ -36,7 +36,7 @@ const App = () => {
       }}
     > 
       {/* @ts-expect-error */}
-      <BrowserRouter history={history}>
+      <UNSTABLE_HistoryRouter history={history}>
         current pathname in atomWithLocation: &quot;{loc.pathname}&quot;
         <div style={{ display: 'flex', gap: '16px', placeContent: 'center' }}>
           <Link to="/1"> to 1</Link>
@@ -48,7 +48,7 @@ const App = () => {
           <Route path="/1" element={Route1} />
           <Route path="/2" element={Route2} />
         </Routes>
-      </BrowserRouter>
+      </UNSTABLE_HistoryRouter>
     </div>
   );
 };
