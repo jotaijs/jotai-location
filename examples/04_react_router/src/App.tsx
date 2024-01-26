@@ -12,16 +12,11 @@ import history from './routerHistory';
 const Route1 = <h1>Hello</h1>;
 const Route2 = <h1>World</h1>;
 const location = atomWithLocation({
-  subscribe: (arg) => {
-    const callback = (callbackArg) => {
-      const searchParams = new URLSearchParams(callbackArg.location.search);
-      const loc = { searchParams, ...callbackArg.location };
-      //set(loc); // how do I set the atom from in here?
-    };
-    const unlisten = history.listen((listenArg) => {});
-    callback(history);
-    return unlisten;
-  },
+  getLocation: () => ({
+    searchParams: new URLSearchParams(history.location.search),
+    ...history.location,
+  }),
+  subscribe: (callback) => history.listen(callback),
 });
 
 const App = () => {
