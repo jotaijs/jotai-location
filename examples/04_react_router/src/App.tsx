@@ -1,5 +1,5 @@
 import {
-  unstable_HistoryRouter as UNSTABLE_HistoryRouter,
+  unstable_HistoryRouter as UnstableHistoryRouter,
   Routes,
   Route,
   Link,
@@ -31,8 +31,8 @@ const App = () => {
         gap: '16px',
       }}
     >
-      {/* @ts-expect-error */}
-      <UNSTABLE_HistoryRouter history={history}>
+      {/* @ts-expect-error: https://github.com/remix-run/react-router/issues/9630#issuecomment-1341643731 */}
+      <UnstableHistoryRouter history={history}>
         current pathname in atomWithLocation: &quot;{loc.pathname}&quot;
         <div style={{ display: 'flex', gap: '16px', placeContent: 'center' }}>
           <Link to="/1"> to 1</Link>
@@ -44,7 +44,7 @@ const App = () => {
           <Route path="/1" element={Route1} />
           <Route path="/2" element={Route2} />
         </Routes>
-      </UNSTABLE_HistoryRouter>
+      </UnstableHistoryRouter>
     </div>
   );
 };
