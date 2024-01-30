@@ -15,6 +15,7 @@
     "baseUrl": ".",
     "paths": {
       "jotai-location": ["./src"]
-    }
+    },
+    "skipLibCheck": true
   }
 }
