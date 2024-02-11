@@ -80,7 +80,13 @@ export function atomWithLocation<T>(options?: Options<T>) {
   };
   const derivedAtom = atom(
     (get) => get(baseAtom),
-    (get, set, arg: SetStateAction<T>) => {
+    (
+      get,
+      set,
+      arg: SetStateAction<T>,
+      atomOptions: Pick<Options<T>, 'replace'> = {},
+    ) => {
+      options = { ...options, ...atomOptions };
       set(baseAtom, arg);
       appL(get(baseAtom), options);
     },
