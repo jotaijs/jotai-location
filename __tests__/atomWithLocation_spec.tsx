@@ -114,6 +114,66 @@ describe('atomWithLocation', () => {
     expect(window.location.pathname).toEqual('/1');
     expect(window.history.length).toEqual(3);
   });
+
+  it('can override atomOptions', async () => {
+    const locationAtom = atomWithLocation({ replace: false });
+
+    const Navigation = () => {
+      const [location, setLocation] = useAtom(locationAtom);
+      return (
+        <>
+          <div> current pathname in atomWithLocation: {location.pathname} </div>
+          <button type="button" onClick={() => window.history.back()}>
+            back
+          </button>
+          <button type="button" onClick={() => setLocation({ pathname: '/1' })}>
+            button1
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setLocation(
+                {
+                  pathname: '/2',
+                },
+                { replace: true },
+              )
+            }
+          >
+            button2
+          </button>
+        </>
+      );
+    };
+
+    const { findByText, getByText } = render(
+      <StrictMode>
+        <Navigation />
+      </StrictMode>,
+    );
+
+    await findByText('current pathname in atomWithLocation: /');
+    expect(window.location.pathname).toEqual('/');
+    expect(window.history.length).toEqual(1);
+
+    await userEvent.click(getByText('button1'));
+
+    await findByText('current pathname in atomWithLocation: /1');
+    expect(window.location.pathname).toEqual('/1');
+    expect(window.history.length).toEqual(2);
+
+    await userEvent.click(getByText('button2'));
+
+    await findByText('current pathname in atomWithLocation: /2');
+    expect(window.location.pathname).toEqual('/2');
+    expect(window.history.length).toEqual(2);
+
+    await userEvent.click(getByText('back'));
+
+    await findByText('current pathname in atomWithLocation: /1');
+    expect(window.location.pathname).toEqual('/1');
+    expect(window.history.length).toEqual(2);
+  });
 });
 
 describe('atomWithLocation without window', () => {
