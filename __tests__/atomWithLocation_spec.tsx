@@ -1,6 +1,6 @@
 import { useAtom } from 'jotai';
 import React, { StrictMode } from 'react';
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { atomWithLocation } from '../src/index';
 
@@ -126,7 +126,10 @@ describe('atomWithLocation', () => {
           <button type="button" onClick={() => window.history.back()}>
             back
           </button>
-          <button type="button" onClick={() => setLocation({ pathname: '/1' })}>
+          <button
+            type="button"
+            onClick={() => setLocation({ pathname: '/123' })}
+          >
             button1
           </button>
           <button
@@ -134,7 +137,7 @@ describe('atomWithLocation', () => {
             onClick={() =>
               setLocation(
                 {
-                  pathname: '/2',
+                  pathname: '/234',
                 },
                 { replace: true },
               )
@@ -154,23 +157,9 @@ describe('atomWithLocation', () => {
 
     const previousTestHistoryLength = 3;
 
-    await findByText('current pathname in atomWithLocation: /');
-    expect(window.location.pathname).toEqual('/');
-    expect(window.history.length).toEqual(previousTestHistoryLength);
-
-    await userEvent.click(getByText('button1')); // TODO: Why doesn't it increment the history length?
-
-    await findByText('current pathname in atomWithLocation: /1');
-    expect(window.location.pathname).toEqual('/1');
-    expect(window.history.length).toEqual(previousTestHistoryLength);
-
-    await userEvent.click(getByText('button2'));
-
-    await findByText('current pathname in atomWithLocation: /2');
-    expect(window.location.pathname).toEqual('/2');
-    expect(window.history.length).toEqual(previousTestHistoryLength);
-
-    await userEvent.click(getByText('back'));
+    await act(async () => {
+      window.history.pushState(null, '', '/');
+    });
 
     await findByText('current pathname in atomWithLocation: /');
     expect(window.location.pathname).toEqual('/');
@@ -178,9 +167,32 @@ describe('atomWithLocation', () => {
 
     await userEvent.click(getByText('button1'));
 
-    await findByText('current pathname in atomWithLocation: /1');
-    expect(window.location.pathname).toEqual('/1');
-    expect(window.history.length).toEqual(previousTestHistoryLength);
+    await findByText('current pathname in atomWithLocation: /123');
+    expect(window.location.pathname).toEqual('/123');
+    expect(window.history.length).toEqual(previousTestHistoryLength + 1);
+
+    await userEvent.click(getByText('button2'));
+
+    await findByText('current pathname in atomWithLocation: /234');
+    expect(window.location.pathname).toEqual('/234');
+    expect(window.history.length).toEqual(previousTestHistoryLength + 1);
+
+    await userEvent.click(getByText('back'));
+
+    await findByText('current pathname in atomWithLocation: /');
+    expect(window.location.pathname).toEqual('/');
+    expect(window.history.length).toEqual(previousTestHistoryLength + 1);
+
+    // The first click overwrites the history entry we
+    // went back from. The history length remains the same.
+    await userEvent.click(getByText('button1'));
+
+    // The second click adds a new history entry, which now increments the history length.
+    await userEvent.click(getByText('button1'));
+
+    await findByText('current pathname in atomWithLocation: /123');
+    expect(window.location.pathname).toEqual('/123');
+    expect(window.history.length).toEqual(previousTestHistoryLength + 2);
   });
 });
 
