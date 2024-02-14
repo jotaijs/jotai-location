@@ -136,7 +136,6 @@ describe('atomWithLocation', () => {
                 {
                   pathname: '/2',
                 },
-                // @ts-expect-error: TODO: How can we fix this error? Expected 1 arguments, but got 2
                 { replace: true },
               )
             }
