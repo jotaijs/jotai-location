@@ -1,12 +1,52 @@
 import { useAtom } from 'jotai';
 import React, { StrictMode } from 'react';
-import { act, render } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { atomWithLocation } from '../src/index';
 
+function assertPathNameAndHistoryLength(
+  expectedPathname: string,
+  expectedHistoryLength: number,
+) {
+  expect(window.location.pathname).toEqual(expectedPathname);
+  expect(window.history.length).toEqual(expectedHistoryLength);
+}
+
+async function assertStartState(
+  startTestHistoryLength: number,
+  findByText: any,
+) {
+  await findByText('current pathname in atomWithLocation: /');
+  assertPathNameAndHistoryLength('/', startTestHistoryLength);
+}
+
+function clickButtonAndAssertTemplate(localFindByText: any) {
+  return async function clickButtonAndAssert(
+    target: `button${number}` | 'back' | 'buttonWithReplace' | 'buttonWithPush',
+    historyLength: number,
+    targetPathName?: string,
+  ) {
+    let expectedPathname: string = '/';
+    if (target === 'buttonWithReplace') {
+      expectedPathname = '/123';
+    } else if (target === 'buttonWithPush') {
+      expectedPathname = '/234';
+    } else if (target.startsWith('button')) {
+      expectedPathname = `/${target.slice(-1)}`;
+    } else if (target === 'back' && targetPathName) {
+      expectedPathname = targetPathName;
+    }
+    await userEvent.click(await localFindByText(target));
+    await localFindByText(
+      `current pathname in atomWithLocation: ${expectedPathname}`,
+    );
+    assertPathNameAndHistoryLength(expectedPathname, historyLength);
+  };
+}
+
 describe('atomWithLocation', () => {
   beforeEach(() => {
-    window.history.replaceState(null, '', '/');
+    window.history.pushState(null, '', '/');
   });
 
   it('can replace state', async () => {
@@ -37,25 +77,18 @@ describe('atomWithLocation', () => {
       );
     };
 
-    const { findByText, getByText } = render(
+    const { findByText } = render(
       <StrictMode>
         <Navigation />
       </StrictMode>,
     );
 
-    await findByText('current pathname in atomWithLocation: /');
-    expect(window.location.pathname).toEqual('/');
-    expect(window.history.length).toEqual(1);
+    const clickButtonAndAssert = clickButtonAndAssertTemplate(findByText);
+    const startHistoryLength = window.history.length;
+    assertStartState(startHistoryLength, findByText);
 
-    await userEvent.click(getByText('button1'));
-
-    await findByText('current pathname in atomWithLocation: /1');
-    expect(window.location.pathname).toEqual('/1');
-    expect(window.history.length).toEqual(1);
-
-    await userEvent.click(getByText('button2'));
-    expect(window.location.pathname).toEqual('/2');
-    expect(window.history.length).toEqual(1);
+    await clickButtonAndAssert('button1', startHistoryLength);
+    await clickButtonAndAssert('button2', startHistoryLength);
   });
 
   it('can push state', async () => {
@@ -86,33 +119,19 @@ describe('atomWithLocation', () => {
       );
     };
 
-    const { findByText, getByText } = render(
+    const { findByText } = render(
       <StrictMode>
         <Navigation />
       </StrictMode>,
     );
 
-    await findByText('current pathname in atomWithLocation: /');
-    expect(window.location.pathname).toEqual('/');
-    expect(window.history.length).toEqual(1);
+    const clickButtonAndAssert = clickButtonAndAssertTemplate(findByText);
+    const startHistoryLength = window.history.length;
+    assertStartState(startHistoryLength, findByText);
 
-    await userEvent.click(getByText('button1'));
-
-    await findByText('current pathname in atomWithLocation: /1');
-    expect(window.location.pathname).toEqual('/1');
-    expect(window.history.length).toEqual(2);
-
-    await userEvent.click(getByText('button2'));
-
-    await findByText('current pathname in atomWithLocation: /2');
-    expect(window.location.pathname).toEqual('/2');
-    expect(window.history.length).toEqual(3);
-
-    await userEvent.click(getByText('back'));
-
-    await findByText('current pathname in atomWithLocation: /1');
-    expect(window.location.pathname).toEqual('/1');
-    expect(window.history.length).toEqual(3);
+    await clickButtonAndAssert('button1', startHistoryLength + 1);
+    await clickButtonAndAssert('button2', startHistoryLength + 2);
+    await clickButtonAndAssert('back', startHistoryLength + 2, '/1');
   });
 
   it('can override atomOptions, from replace=false to replace=true', async () => {
@@ -128,7 +147,7 @@ describe('atomWithLocation', () => {
           </button>
           <button
             type="button"
-            onClick={() => setLocation({ pathname: '/123' })}
+            onClick={() => setLocation({ pathname: '/234' })}
           >
             buttonWithPush
           </button>
@@ -137,7 +156,7 @@ describe('atomWithLocation', () => {
             onClick={() =>
               setLocation(
                 {
-                  pathname: '/234',
+                  pathname: '/123',
                 },
                 { replace: true },
               )
@@ -149,50 +168,27 @@ describe('atomWithLocation', () => {
       );
     };
 
-    const { findByText, getByText } = render(
+    const { findByText } = render(
       <StrictMode>
         <Navigation />
       </StrictMode>,
     );
 
-    const previousTestHistoryLength = 3;
+    const clickButtonAndAssert = clickButtonAndAssertTemplate(findByText);
+    const startHistoryLength = window.history.length;
 
-    await act(async () => {
-      window.history.pushState(null, '', '/');
-    });
+    assertStartState(startHistoryLength, findByText);
 
-    await findByText('current pathname in atomWithLocation: /');
-    expect(window.location.pathname).toEqual('/');
-    expect(window.history.length).toEqual(previousTestHistoryLength);
+    await clickButtonAndAssert('buttonWithPush', startHistoryLength + 1);
+    await clickButtonAndAssert('buttonWithReplace', startHistoryLength + 1);
+    await clickButtonAndAssert('back', startHistoryLength + 1, '/');
 
-    await userEvent.click(getByText('buttonWithPush'));
-
-    await findByText('current pathname in atomWithLocation: /123');
-    expect(window.location.pathname).toEqual('/123');
-    expect(window.history.length).toEqual(previousTestHistoryLength + 1);
-
-    await userEvent.click(getByText('buttonWithReplace'));
-
-    await findByText('current pathname in atomWithLocation: /234');
-    expect(window.location.pathname).toEqual('/234');
-    expect(window.history.length).toEqual(previousTestHistoryLength + 1);
-
-    await userEvent.click(getByText('back'));
-
-    await findByText('current pathname in atomWithLocation: /');
-    expect(window.location.pathname).toEqual('/');
-    expect(window.history.length).toEqual(previousTestHistoryLength + 1);
-
-    // The first click overwrites the history entry we
+    // This click overwrites the history entry we
     // went back from. The history length remains the same.
-    await userEvent.click(getByText('buttonWithPush'));
+    await clickButtonAndAssert('buttonWithPush', startHistoryLength + 1);
 
     // The second click adds a new history entry, which now increments the history length.
-    await userEvent.click(getByText('buttonWithPush'));
-
-    await findByText('current pathname in atomWithLocation: /123');
-    expect(window.location.pathname).toEqual('/123');
-    expect(window.history.length).toEqual(previousTestHistoryLength + 2);
+    await clickButtonAndAssert('buttonWithPush', startHistoryLength + 2);
   });
 
   it('can override atomOptions, from replace=true to replace=false', async () => {
@@ -229,58 +225,22 @@ describe('atomWithLocation', () => {
       );
     };
 
-    const { findByText, getByText } = render(
+    const { findByText } = render(
       <StrictMode>
         <Navigation />
       </StrictMode>,
     );
 
-    const previousTestHistoryLength = window.history.length;
+    const clickButtonAndAssert = clickButtonAndAssertTemplate(findByText);
+    const startTestHistoryLength = window.history.length;
+    assertStartState(startTestHistoryLength, findByText);
 
-    await act(async () => {
-      window.history.replaceState(null, '', '/');
-    });
-
-    await findByText('current pathname in atomWithLocation: /');
-    expect(window.location.pathname).toEqual('/');
-    expect(window.history.length).toEqual(previousTestHistoryLength);
-
-    await userEvent.click(getByText('buttonWithReplace'));
-
-    await findByText('current pathname in atomWithLocation: /123');
-    expect(window.location.pathname).toEqual('/123');
-    expect(window.history.length).toEqual(previousTestHistoryLength);
-
-    await userEvent.click(getByText('buttonWithPush'));
-
-    await findByText('current pathname in atomWithLocation: /234');
-    expect(window.location.pathname).toEqual('/234');
-    expect(window.history.length).toEqual(previousTestHistoryLength + 1);
-
-    await userEvent.click(getByText('back'));
-
-    await findByText('current pathname in atomWithLocation: /123');
-    expect(window.location.pathname).toEqual('/123');
-    expect(window.history.length).toEqual(previousTestHistoryLength + 1);
-
-    await userEvent.click(getByText('buttonWithReplace'));
-
-    await findByText('current pathname in atomWithLocation: /123');
-    expect(window.location.pathname).toEqual('/123');
-    expect(window.history.length).toEqual(previousTestHistoryLength + 1);
-
-    // same replace and push behaviour
-    await userEvent.click(getByText('buttonWithPush'));
-
-    await findByText('current pathname in atomWithLocation: /234');
-    expect(window.location.pathname).toEqual('/234');
-    expect(window.history.length).toEqual(previousTestHistoryLength + 1);
-
-    await userEvent.click(getByText('buttonWithPush'));
-
-    await findByText('current pathname in atomWithLocation: /234');
-    expect(window.location.pathname).toEqual('/234');
-    expect(window.history.length).toEqual(previousTestHistoryLength + 2);
+    await clickButtonAndAssert('buttonWithReplace', startTestHistoryLength);
+    await clickButtonAndAssert('buttonWithPush', startTestHistoryLength + 1);
+    await clickButtonAndAssert('back', startTestHistoryLength + 1, '/123');
+    await clickButtonAndAssert('buttonWithReplace', startTestHistoryLength + 1);
+    await clickButtonAndAssert('buttonWithPush', startTestHistoryLength + 1);
+    await clickButtonAndAssert('buttonWithPush', startTestHistoryLength + 2);
   });
 });
 
