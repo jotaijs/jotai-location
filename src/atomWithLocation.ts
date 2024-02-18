@@ -1,5 +1,5 @@
 import { atom } from 'jotai/vanilla';
-import type { PrimitiveAtom, SetStateAction } from 'jotai/vanilla';
+import type { SetStateAction, WritableAtom } from 'jotai/vanilla';
 
 type Location = {
   pathname?: string;
@@ -50,13 +50,19 @@ type Options<T> = {
 type RequiredOptions<T> = Omit<Options<T>, 'getLocation' | 'applyLocation'> &
   Required<Pick<Options<T>, 'getLocation' | 'applyLocation'>>;
 
+type AtomOptions<T> = Pick<Options<T>, 'replace'>;
+
 export function atomWithLocation(
   options?: Options<Location>,
-): PrimitiveAtom<Location>;
+): WritableAtom<
+  Location,
+  [SetStateAction<Location>, AtomOptions<Location>?],
+  void
+>;
 
 export function atomWithLocation<T>(
   options: RequiredOptions<T>,
-): PrimitiveAtom<T>;
+): WritableAtom<T, [SetStateAction<T>, AtomOptions<T>?], void>;
 
 export function atomWithLocation<T>(options?: Options<T>) {
   const getL =
@@ -80,9 +86,9 @@ export function atomWithLocation<T>(options?: Options<T>) {
   };
   const derivedAtom = atom(
     (get) => get(baseAtom),
-    (get, set, arg: SetStateAction<T>) => {
+    (get, set, arg: SetStateAction<T>, atomOptions: AtomOptions<T> = {}) => {
       set(baseAtom, arg);
-      appL(get(baseAtom), options);
+      appL(get(baseAtom), { ...options, ...atomOptions });
     },
   );
   return derivedAtom;

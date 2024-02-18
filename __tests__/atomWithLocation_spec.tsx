@@ -1,6 +1,6 @@
 import { useAtom } from 'jotai';
 import React, { StrictMode } from 'react';
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { atomWithLocation } from '../src/index';
 
@@ -113,6 +113,86 @@ describe('atomWithLocation', () => {
     await findByText('current pathname in atomWithLocation: /1');
     expect(window.location.pathname).toEqual('/1');
     expect(window.history.length).toEqual(3);
+  });
+
+  it('can override atomOptions', async () => {
+    const locationAtom = atomWithLocation({ replace: false });
+
+    const Navigation = () => {
+      const [location, setLocation] = useAtom(locationAtom);
+      return (
+        <>
+          <div> current pathname in atomWithLocation: {location.pathname} </div>
+          <button type="button" onClick={() => window.history.back()}>
+            back
+          </button>
+          <button
+            type="button"
+            onClick={() => setLocation({ pathname: '/123' })}
+          >
+            button1
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setLocation(
+                {
+                  pathname: '/234',
+                },
+                { replace: true },
+              )
+            }
+          >
+            button2
+          </button>
+        </>
+      );
+    };
+
+    const { findByText, getByText } = render(
+      <StrictMode>
+        <Navigation />
+      </StrictMode>,
+    );
+
+    const previousTestHistoryLength = 3;
+
+    await act(async () => {
+      window.history.pushState(null, '', '/');
+    });
+
+    await findByText('current pathname in atomWithLocation: /');
+    expect(window.location.pathname).toEqual('/');
+    expect(window.history.length).toEqual(previousTestHistoryLength);
+
+    await userEvent.click(getByText('button1'));
+
+    await findByText('current pathname in atomWithLocation: /123');
+    expect(window.location.pathname).toEqual('/123');
+    expect(window.history.length).toEqual(previousTestHistoryLength + 1);
+
+    await userEvent.click(getByText('button2'));
+
+    await findByText('current pathname in atomWithLocation: /234');
+    expect(window.location.pathname).toEqual('/234');
+    expect(window.history.length).toEqual(previousTestHistoryLength + 1);
+
+    await userEvent.click(getByText('back'));
+
+    await findByText('current pathname in atomWithLocation: /');
+    expect(window.location.pathname).toEqual('/');
+    expect(window.history.length).toEqual(previousTestHistoryLength + 1);
+
+    // The first click overwrites the history entry we
+    // went back from. The history length remains the same.
+    await userEvent.click(getByText('button1'));
+
+    // The second click adds a new history entry, which now increments the history length.
+    await userEvent.click(getByText('button1'));
+
+    await findByText('current pathname in atomWithLocation: /123');
+    expect(window.location.pathname).toEqual('/123');
+    expect(window.history.length).toEqual(previousTestHistoryLength + 2);
   });
 });
 
