@@ -115,7 +115,7 @@ describe('atomWithLocation', () => {
     expect(window.history.length).toEqual(3);
   });
 
-  it('can override atomOptions', async () => {
+  it('can override atomOptions, from replace=false to replace=true', async () => {
     const locationAtom = atomWithLocation({ replace: false });
 
     const Navigation = () => {
@@ -130,7 +130,7 @@ describe('atomWithLocation', () => {
             type="button"
             onClick={() => setLocation({ pathname: '/123' })}
           >
-            button1
+            buttonWithPush
           </button>
           <button
             type="button"
@@ -143,7 +143,7 @@ describe('atomWithLocation', () => {
               )
             }
           >
-            button2
+            buttonWithReplace
           </button>
         </>
       );
@@ -165,13 +165,13 @@ describe('atomWithLocation', () => {
     expect(window.location.pathname).toEqual('/');
     expect(window.history.length).toEqual(previousTestHistoryLength);
 
-    await userEvent.click(getByText('button1'));
+    await userEvent.click(getByText('buttonWithPush'));
 
     await findByText('current pathname in atomWithLocation: /123');
     expect(window.location.pathname).toEqual('/123');
     expect(window.history.length).toEqual(previousTestHistoryLength + 1);
 
-    await userEvent.click(getByText('button2'));
+    await userEvent.click(getByText('buttonWithReplace'));
 
     await findByText('current pathname in atomWithLocation: /234');
     expect(window.location.pathname).toEqual('/234');
@@ -185,13 +185,101 @@ describe('atomWithLocation', () => {
 
     // The first click overwrites the history entry we
     // went back from. The history length remains the same.
-    await userEvent.click(getByText('button1'));
+    await userEvent.click(getByText('buttonWithPush'));
 
     // The second click adds a new history entry, which now increments the history length.
-    await userEvent.click(getByText('button1'));
+    await userEvent.click(getByText('buttonWithPush'));
 
     await findByText('current pathname in atomWithLocation: /123');
     expect(window.location.pathname).toEqual('/123');
+    expect(window.history.length).toEqual(previousTestHistoryLength + 2);
+  });
+
+  it('can override atomOptions, from replace=true to replace=false', async () => {
+    const locationAtom = atomWithLocation({ replace: true });
+
+    const Navigation = () => {
+      const [location, setLocation] = useAtom(locationAtom);
+      return (
+        <>
+          <div> current pathname in atomWithLocation: {location.pathname} </div>
+          <button type="button" onClick={() => window.history.back()}>
+            back
+          </button>
+          <button
+            type="button"
+            onClick={() => setLocation({ pathname: '/123' })}
+          >
+            buttonWithReplace
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setLocation(
+                {
+                  pathname: '/234',
+                },
+                { replace: false },
+              )
+            }
+          >
+            buttonWithPush
+          </button>
+        </>
+      );
+    };
+
+    const { findByText, getByText } = render(
+      <StrictMode>
+        <Navigation />
+      </StrictMode>,
+    );
+
+    const previousTestHistoryLength = window.history.length;
+
+    await act(async () => {
+      window.history.replaceState(null, '', '/');
+    });
+
+    await findByText('current pathname in atomWithLocation: /');
+    expect(window.location.pathname).toEqual('/');
+    expect(window.history.length).toEqual(previousTestHistoryLength);
+
+    await userEvent.click(getByText('buttonWithReplace'));
+
+    await findByText('current pathname in atomWithLocation: /123');
+    expect(window.location.pathname).toEqual('/123');
+    expect(window.history.length).toEqual(previousTestHistoryLength);
+
+    await userEvent.click(getByText('buttonWithPush'));
+
+    await findByText('current pathname in atomWithLocation: /234');
+    expect(window.location.pathname).toEqual('/234');
+    expect(window.history.length).toEqual(previousTestHistoryLength + 1);
+
+    await userEvent.click(getByText('back'));
+
+    await findByText('current pathname in atomWithLocation: /123');
+    expect(window.location.pathname).toEqual('/123');
+    expect(window.history.length).toEqual(previousTestHistoryLength + 1);
+
+    await userEvent.click(getByText('buttonWithReplace'));
+
+    await findByText('current pathname in atomWithLocation: /123');
+    expect(window.location.pathname).toEqual('/123');
+    expect(window.history.length).toEqual(previousTestHistoryLength + 1);
+
+    // same replace and push behaviour
+    await userEvent.click(getByText('buttonWithPush'));
+
+    await findByText('current pathname in atomWithLocation: /234');
+    expect(window.location.pathname).toEqual('/234');
+    expect(window.history.length).toEqual(previousTestHistoryLength + 1);
+
+    await userEvent.click(getByText('buttonWithPush'));
+
+    await findByText('current pathname in atomWithLocation: /234');
+    expect(window.location.pathname).toEqual('/234');
     expect(window.history.length).toEqual(previousTestHistoryLength + 2);
   });
 });
