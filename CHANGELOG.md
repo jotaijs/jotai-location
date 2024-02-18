@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.5.3] - 2024-02-18
+### Changed
+- feat(atomWithLocation): override replace for specific navigations #28
+
 ## [0.5.2] - 2023-10-15
 ### Changed
 - fix(atomWithHash): default safeJSONParse #22
