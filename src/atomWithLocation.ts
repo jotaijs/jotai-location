@@ -4,6 +4,7 @@ import type { SetStateAction, WritableAtom } from 'jotai/vanilla';
 type Location = {
   pathname?: string;
   searchParams?: URLSearchParams;
+  hash?: string;
 };
 
 const getLocation = (): Location => {
@@ -13,6 +14,7 @@ const getLocation = (): Location => {
   return {
     pathname: window.location.pathname,
     searchParams: new URLSearchParams(window.location.search),
+    hash: window.location.hash,
   };
 };
 
@@ -21,11 +23,14 @@ const applyLocation = (
   options?: { replace?: boolean },
 ): void => {
   const url = new URL(window.location.href);
-  if (location.pathname) {
+  if ('pathname' in location) {
     url.pathname = location.pathname;
   }
-  if (location.searchParams) {
+  if ('searchParams' in location) {
     url.search = location.searchParams.toString();
+  }
+  if ('hash' in location) {
+    url.hash = location.hash;
   }
   if (options?.replace) {
     window.history.replaceState(null, '', url);
