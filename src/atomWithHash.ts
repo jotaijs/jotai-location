@@ -26,6 +26,12 @@ export function atomWithHash<Value>(
   },
 ): WritableAtom<Value, [SetStateActionWithReset<Value>], void> {
   const serialize = options?.serialize || JSON.stringify;
+  let hashValueInURL;
+  if (global.window) {
+    hashValueInURL = new URLSearchParams(window.location.hash.slice(1)).get(
+      key,
+    );
+  }
   const deserialize = options?.deserialize || safeJSONParse(initialValue);
   const subscribe =
     options?.subscribe ||
@@ -51,7 +57,7 @@ export function atomWithHash<Value>(
   if (typeof setHashOption === 'function') {
     setHash = setHashOption;
   }
-  const strAtom = atom<string | null>(null);
+  const strAtom = atom<string | null>(hashValueInURL ?? null);
   strAtom.onMount = (setAtom) => {
     if (typeof window === 'undefined' || !window.location) {
       return undefined;
