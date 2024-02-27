@@ -12,12 +12,27 @@ function assertPathNameAndHistoryLength(
   expect(window.history.length).toEqual(expectedHistoryLength);
 }
 
+function assertHashAndHistoryLength(
+  expectedHash: string,
+  expectedHistoryLength: number,
+) {
+  expect(window.location.hash).toEqual(expectedHash);
+  expect(window.history.length).toEqual(expectedHistoryLength);
+}
+
 async function assertStartState(
   startTestHistoryLength: number,
   findByText: any,
+  assert: 'pathname' | 'hash' | 'both' = 'pathname',
 ) {
-  await findByText('current pathname in atomWithLocation: /');
-  assertPathNameAndHistoryLength('/', startTestHistoryLength);
+  if (assert === 'pathname' || assert === 'both') {
+    await findByText('current pathname in atomWithLocation: /');
+    assertPathNameAndHistoryLength('/', startTestHistoryLength);
+  }
+  if (assert === 'hash' || assert === 'both') {
+    await findByText('current hash in atomWithLocation: ');
+    assertHashAndHistoryLength('', startTestHistoryLength);
+  }
 }
 
 function clickButtonAndAssertTemplate(localFindByText: any) {
@@ -25,26 +40,49 @@ function clickButtonAndAssertTemplate(localFindByText: any) {
     target: `button${number}` | 'back' | 'buttonWithReplace' | 'buttonWithPush',
     historyLength: number,
     targetPathName?: string,
+    assert: 'pathname' | 'hash' | 'both' = 'pathname',
   ) {
     let expectedPathname: string = '/';
+    let expectedHash: string = '';
     if (target === 'buttonWithReplace') {
       expectedPathname = '/123';
+      expectedHash = '#tab=1';
     } else if (target === 'buttonWithPush') {
       expectedPathname = '/234';
+      expectedHash = '#tab=2';
     } else if (target.startsWith('button')) {
       expectedPathname = `/${target.slice(-1)}`;
+      expectedHash = `#tab=${target.slice(-1)}`;
     } else if (target === 'back' && targetPathName) {
       expectedPathname = targetPathName;
     }
     await userEvent.click(await localFindByText(target));
-    await localFindByText(
-      `current pathname in atomWithLocation: ${expectedPathname}`,
-    );
-    assertPathNameAndHistoryLength(expectedPathname, historyLength);
+    if (assert === 'pathname') {
+      await localFindByText(
+        `current pathname in atomWithLocation: ${expectedPathname}`,
+      );
+      assertPathNameAndHistoryLength(expectedPathname, historyLength);
+    }
+    if (assert === 'hash') {
+      await localFindByText(
+        `current hash in atomWithLocation: ${expectedHash}`,
+      );
+      assertHashAndHistoryLength(expectedHash, historyLength);
+    }
+    if (assert === 'both') {
+      await localFindByText(
+        `current pathname in atomWithLocation: ${expectedPathname}`,
+      );
+      assertPathNameAndHistoryLength(expectedPathname, historyLength);
+      await localFindByText(
+        `current hash in atomWithLocation: ${expectedHash}`,
+      );
+      assertHashAndHistoryLength(expectedHash, historyLength);
+    }
   };
 }
 
-describe('atomWithLocation', () => {
+describe('atomWithLocation, pathName', () => {
   beforeEach(() => {
     window.history.pushState(null, '', '/');
   });
@@ -241,6 +279,114 @@ describe('atomWithLocation', () => {
     await clickButtonAndAssert('buttonWithReplace', startTestHistoryLength + 1);
     await clickButtonAndAssert('buttonWithPush', startTestHistoryLength + 1);
     await clickButtonAndAssert('buttonWithPush', startTestHistoryLength + 2);
+  });
+});
+
+describe('atomWithLocation, hash', () => {
+  it('can push state with hash', async () => {
+    const locationAtom = atomWithLocation({ replace: false });
+
+    const Navigation = () => {
+      const [location, setLocation] = useAtom(locationAtom);
+      return (
+        <>
+          <div> current hash in atomWithLocation: #{location.hash} </div>
+          <button type="button" onClick={() => window.history.back()}>
+            back
+          </button>
+          <button type="button" onClick={() => setLocation({ hash: 'tab=1' })}>
+            button1
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setLocation({
+                hash: 'tab=2',
+              })
+            }
+          >
+            button2
+          </button>
+        </>
+      );
+    };
+
+    const { findByText } = render(
+      <StrictMode>
+        <Navigation />
+      </StrictMode>,
+    );
+
+    const clickButtonAndAssert = clickButtonAndAssertTemplate(findByText);
+    const startHistoryLength = window.history.length;
+    assertStartState(startHistoryLength, findByText);
+
+    await clickButtonAndAssert(
+      'button1',
+      startHistoryLength + 1,
+      undefined,
+      'hash',
+    );
+    await clickButtonAndAssert(
+      'button2',
+      startHistoryLength + 2,
+      undefined,
+      'hash',
+    );
+  });
+
+  it('can replace state with hash', async () => {
+    const locationAtom = atomWithLocation({ replace: true });
+
+    const Navigation = () => {
+      const [location, setLocation] = useAtom(locationAtom);
+      return (
+        <>
+          <div> current hash in atomWithLocation: #{location.hash} </div>
+          <button type="button" onClick={() => window.history.back()}>
+            back
+          </button>
+          <button type="button" onClick={() => setLocation({ hash: 'tab=1' })}>
+            button1
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setLocation({
+                hash: 'tab=2',
+              })
+            }
+          >
+            button2
+          </button>
+        </>
+      );
+    };
+
+    const { findByText } = render(
+      <StrictMode>
+        <Navigation />
+      </StrictMode>,
+    );
+
+    const clickButtonAndAssert = clickButtonAndAssertTemplate(findByText);
+    const startHistoryLength = window.history.length;
+    assertStartState(startHistoryLength, findByText);
+
+    await clickButtonAndAssert(
+      'button1',
+      startHistoryLength,
+      undefined,
+      'hash',
+    );
+    await clickButtonAndAssert(
+      'button2',
+      startHistoryLength,
+      undefined,
+      'hash',
+    );
+
+    await clickButtonAndAssert('back', startHistoryLength, undefined, 'hash');
   });
 });
 
