@@ -26,9 +26,9 @@ export function atomWithHash<Value>(
   },
 ): WritableAtom<Value, [SetStateActionWithReset<Value>], void> {
   const serialize = options?.serialize || JSON.stringify;
-  let hashValueInURL;
-  if (global.window) {
-    hashValueInURL = new URLSearchParams(window.location.hash.slice(1)).get(
+  let initialValueInHash: string | null = null;
+  if (typeof window !== 'undefined') {
+    initialValueInHash = new URLSearchParams(window.location.hash.slice(1)).get(
       key,
     );
   }
@@ -57,7 +57,7 @@ export function atomWithHash<Value>(
   if (typeof setHashOption === 'function') {
     setHash = setHashOption;
   }
-  const strAtom = atom<string | null>(hashValueInURL ?? null);
+  const strAtom = atom(initialValueInHash);
   strAtom.onMount = (setAtom) => {
     if (typeof window === 'undefined' || !window.location) {
       return undefined;
