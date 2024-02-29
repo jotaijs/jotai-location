@@ -20,18 +20,31 @@ function assertHashAndHistoryLength(
   expect(window.history.length).toEqual(expectedHistoryLength);
 }
 
+function assertSearchParamAndHistoryLength(
+  expectedSearchParams: URLSearchParams,
+  expectedHistoryLength: number,
+) {
+  expect(window.location.search).toEqual(`?${expectedSearchParams.toString()}`);
+  expect(window.history.length).toEqual(expectedHistoryLength);
+}
+
 async function assertStartState(
   startTestHistoryLength: number,
   findByText: any,
-  assert: 'pathname' | 'hash' | 'both' = 'pathname',
+  assert: 'pathname' | 'hash' | 'searchParams' | 'all',
 ) {
-  if (assert === 'pathname' || assert === 'both') {
+  if (assert === 'pathname' || assert === 'all') {
     await findByText('current pathname in atomWithLocation: /');
     assertPathNameAndHistoryLength('/', startTestHistoryLength);
   }
-  if (assert === 'hash' || assert === 'both') {
-    await findByText('current hash in atomWithLocation: ');
+  if (assert === 'hash' || assert === 'all') {
+    await findByText('current hash in atomWithLocation: #');
     assertHashAndHistoryLength('', startTestHistoryLength);
+  }
+  if (assert === 'searchParams' || assert === 'all') {
+    await findByText('current searchParams in atomWithLocation:');
+    expect(window.location.search).toEqual('');
+    expect(window.history.length).toEqual(startTestHistoryLength);
   }
 }
 
@@ -39,22 +52,37 @@ function clickButtonAndAssertTemplate(localFindByText: any) {
   return async function clickButtonAndAssert(
     target: `button${number}` | 'back' | 'buttonWithReplace' | 'buttonWithPush',
     historyLength: number,
-    targetPathName?: string,
-    assert: 'pathname' | 'hash' | 'both' = 'pathname',
+    {
+      targetPathName,
+      targetHash,
+      targetSearchParams,
+    }: {
+      targetPathName?: string;
+      targetHash?: string;
+      targetSearchParams?: string;
+    } = {},
+    assert: 'pathname' | 'hash' | 'search' | 'all' = 'pathname',
   ) {
     let expectedPathname: string = '/';
     let expectedHash: string = '';
+    let expectedSearchParams = new URLSearchParams();
     if (target === 'buttonWithReplace') {
       expectedPathname = '/123';
       expectedHash = '#tab=1';
+      expectedSearchParams.set('tab', '1');
     } else if (target === 'buttonWithPush') {
       expectedPathname = '/234';
       expectedHash = '#tab=2';
+      expectedSearchParams.set('tab', '2');
     } else if (target.startsWith('button')) {
       expectedPathname = `/${target.slice(-1)}`;
       expectedHash = `#tab=${target.slice(-1)}`;
-    } else if (target === 'back' && targetPathName) {
-      expectedPathname = targetPathName;
+      expectedSearchParams.set('tab', target.slice(-1));
+    } else if (target === 'back') {
+      expectedPathname = targetPathName ?? '';
+      expectedHash = `#${targetHash ?? ''}`;
+      expectedSearchParams = new URLSearchParams();
+      expectedSearchParams.set('tab', targetSearchParams ?? '');
     }
     await userEvent.click(await localFindByText(target));
     if (assert === 'pathname') {
@@ -67,9 +95,16 @@ function clickButtonAndAssertTemplate(localFindByText: any) {
       await localFindByText(
         `current hash in atomWithLocation: ${expectedHash}`,
       );
-      assertHashAndHistoryLength(expectedHash, historyLength);
+      assertHashAndHistoryLength(
+        expectedHash === '#' ? '' : expectedHash,
+        historyLength,
+      );
     }
-    if (assert === 'both') {
+    if (assert === 'search') {
+      await localFindByText(`${expectedSearchParams.toString()}`);
+      assertSearchParamAndHistoryLength(expectedSearchParams, historyLength);
+    }
+    if (assert === 'all') {
       await localFindByText(
         `current pathname in atomWithLocation: ${expectedPathname}`,
       );
@@ -78,13 +113,24 @@ function clickButtonAndAssertTemplate(localFindByText: any) {
         `current hash in atomWithLocation: ${expectedHash}`,
       );
       assertHashAndHistoryLength(expectedHash, historyLength);
+      await localFindByText(
+        `current searchParams in atomWithLocation: ${expectedSearchParams}`,
+      );
+      assertSearchParamAndHistoryLength(expectedSearchParams, historyLength);
     }
   };
 }
 
+const defaultLocation = {
+  pathname: '/',
+  search: '',
+  hash: '',
+  state: null,
+};
+
 describe('atomWithLocation, pathName', () => {
   beforeEach(() => {
-    window.history.pushState(null, '', '/');
+    resetWindow();
   });
 
   it('can replace state', async () => {
@@ -111,6 +157,12 @@ describe('atomWithLocation, pathName', () => {
           >
             button2
           </button>
+          <button
+            type="button"
+            onClick={() => setLocation(defaultLocation, { replace: false })}
+          >
+            reset-button
+          </button>
         </>
       );
     };
@@ -123,10 +175,12 @@ describe('atomWithLocation, pathName', () => {
 
     const clickButtonAndAssert = clickButtonAndAssertTemplate(findByText);
     const startHistoryLength = window.history.length;
-    assertStartState(startHistoryLength, findByText);
+    await assertStartState(startHistoryLength, findByText, 'pathname');
 
     await clickButtonAndAssert('button1', startHistoryLength);
     await clickButtonAndAssert('button2', startHistoryLength);
+
+    await userEvent.click(await findByText('reset-button'));
   });
 
   it('can push state', async () => {
@@ -153,6 +207,12 @@ describe('atomWithLocation, pathName', () => {
           >
             button2
           </button>
+          <button
+            type="button"
+            onClick={() => setLocation(defaultLocation, { replace: false })}
+          >
+            reset-button
+          </button>
         </>
       );
     };
@@ -165,11 +225,15 @@ describe('atomWithLocation, pathName', () => {
 
     const clickButtonAndAssert = clickButtonAndAssertTemplate(findByText);
     const startHistoryLength = window.history.length;
-    assertStartState(startHistoryLength, findByText);
+    assertStartState(startHistoryLength, findByText, 'pathname');
 
     await clickButtonAndAssert('button1', startHistoryLength + 1);
     await clickButtonAndAssert('button2', startHistoryLength + 2);
-    await clickButtonAndAssert('back', startHistoryLength + 2, '/1');
+    await clickButtonAndAssert('back', startHistoryLength + 2, {
+      targetPathName: '/1',
+    });
+
+    await userEvent.click(await findByText('reset-button'));
   });
 
   it('can override atomOptions, from replace=false to replace=true', async () => {
@@ -202,6 +266,12 @@ describe('atomWithLocation, pathName', () => {
           >
             buttonWithReplace
           </button>
+          <button
+            type="button"
+            onClick={() => setLocation(defaultLocation, { replace: false })}
+          >
+            reset-button
+          </button>
         </>
       );
     };
@@ -215,11 +285,13 @@ describe('atomWithLocation, pathName', () => {
     const clickButtonAndAssert = clickButtonAndAssertTemplate(findByText);
     const startHistoryLength = window.history.length;
 
-    assertStartState(startHistoryLength, findByText);
+    assertStartState(startHistoryLength, findByText, 'pathname');
 
     await clickButtonAndAssert('buttonWithPush', startHistoryLength + 1);
     await clickButtonAndAssert('buttonWithReplace', startHistoryLength + 1);
-    await clickButtonAndAssert('back', startHistoryLength + 1, '/');
+    await clickButtonAndAssert('back', startHistoryLength + 1, {
+      targetPathName: '/',
+    });
 
     // This click overwrites the history entry we
     // went back from. The history length remains the same.
@@ -227,6 +299,8 @@ describe('atomWithLocation, pathName', () => {
 
     // The second click adds a new history entry, which now increments the history length.
     await clickButtonAndAssert('buttonWithPush', startHistoryLength + 2);
+
+    await userEvent.click(await findByText('reset-button'));
   });
 
   it('can override atomOptions, from replace=true to replace=false', async () => {
@@ -259,6 +333,12 @@ describe('atomWithLocation, pathName', () => {
           >
             buttonWithPush
           </button>
+          <button
+            type="button"
+            onClick={() => setLocation(defaultLocation, { replace: false })}
+          >
+            reset-button
+          </button>
         </>
       );
     };
@@ -271,18 +351,26 @@ describe('atomWithLocation, pathName', () => {
 
     const clickButtonAndAssert = clickButtonAndAssertTemplate(findByText);
     const startTestHistoryLength = window.history.length;
-    assertStartState(startTestHistoryLength, findByText);
+    assertStartState(startTestHistoryLength, findByText, 'pathname');
 
     await clickButtonAndAssert('buttonWithReplace', startTestHistoryLength);
     await clickButtonAndAssert('buttonWithPush', startTestHistoryLength + 1);
-    await clickButtonAndAssert('back', startTestHistoryLength + 1, '/123');
+    await clickButtonAndAssert('back', startTestHistoryLength + 1, {
+      targetPathName: '/123',
+    });
     await clickButtonAndAssert('buttonWithReplace', startTestHistoryLength + 1);
     await clickButtonAndAssert('buttonWithPush', startTestHistoryLength + 1);
     await clickButtonAndAssert('buttonWithPush', startTestHistoryLength + 2);
+
+    await userEvent.click(await findByText('reset-button'));
   });
 });
 
 describe('atomWithLocation, hash', () => {
+  beforeEach(() => {
+    resetWindow();
+  });
+
   it('can push state with hash', async () => {
     const locationAtom = atomWithLocation({ replace: false });
 
@@ -307,6 +395,12 @@ describe('atomWithLocation, hash', () => {
           >
             button2
           </button>
+          <button
+            type="button"
+            onClick={() => setLocation(defaultLocation, { replace: false })}
+          >
+            reset-button
+          </button>
         </>
       );
     };
@@ -319,7 +413,7 @@ describe('atomWithLocation, hash', () => {
 
     const clickButtonAndAssert = clickButtonAndAssertTemplate(findByText);
     const startHistoryLength = window.history.length;
-    assertStartState(startHistoryLength, findByText);
+    assertStartState(startHistoryLength, findByText, 'hash');
 
     await clickButtonAndAssert(
       'button1',
@@ -333,6 +427,8 @@ describe('atomWithLocation, hash', () => {
       undefined,
       'hash',
     );
+
+    await userEvent.click(await findByText('reset-button'));
   });
 
   it('can replace state with hash', async () => {
@@ -359,6 +455,12 @@ describe('atomWithLocation, hash', () => {
           >
             button2
           </button>
+          <button
+            type="button"
+            onClick={() => setLocation(defaultLocation, { replace: false })}
+          >
+            reset-button
+          </button>
         </>
       );
     };
@@ -371,7 +473,7 @@ describe('atomWithLocation, hash', () => {
 
     const clickButtonAndAssert = clickButtonAndAssertTemplate(findByText);
     const startHistoryLength = window.history.length;
-    assertStartState(startHistoryLength, findByText);
+    assertStartState(startHistoryLength, findByText, 'hash');
 
     await clickButtonAndAssert(
       'button1',
@@ -386,7 +488,164 @@ describe('atomWithLocation, hash', () => {
       'hash',
     );
 
-    await clickButtonAndAssert('back', startHistoryLength, undefined, 'hash');
+    await clickButtonAndAssert(
+      'back',
+      startHistoryLength,
+      { targetHash: '' },
+      'hash',
+    );
+
+    await userEvent.click(await findByText('reset-button'));
+  });
+});
+
+function resetWindow() {
+  window.history.pushState(null, '', '/');
+  window.location.search = '';
+  window.location.hash = '';
+}
+
+describe('atomWithLocation, searchParams', () => {
+  beforeEach(() => {
+    resetWindow();
+  });
+  it('can push state with searchParams', async () => {
+    const locationAtom = atomWithLocation({ replace: false });
+
+    const Navigation = () => {
+      const [location, setLocation] = useAtom(locationAtom);
+      const tab1Params = new URLSearchParams();
+      tab1Params.set('tab', '1');
+      const tab2Params = new URLSearchParams();
+      tab2Params.set('tab', '2');
+
+      return (
+        <>
+          <div>
+            current searchParams in atomWithLocation:
+            <div>{location.searchParams?.toString()}</div>
+          </div>
+          <button type="button" onClick={() => window.history.back()}>
+            back
+          </button>
+          <button
+            type="button"
+            onClick={() => setLocation({ searchParams: tab1Params })}
+          >
+            button1
+          </button>
+          <button
+            type="button"
+            onClick={() => setLocation({ searchParams: tab2Params })}
+          >
+            button2
+          </button>
+          <button
+            type="button"
+            onClick={() => setLocation(defaultLocation, { replace: false })}
+          >
+            reset-button
+          </button>
+        </>
+      );
+    };
+
+    const { findByText, debug } = render(
+      <StrictMode>
+        <Navigation />
+      </StrictMode>,
+    );
+
+    const clickButtonAndAssert = clickButtonAndAssertTemplate(findByText);
+    const startHistoryLength = window.history.length;
+    await assertStartState(startHistoryLength, findByText, 'searchParams');
+    debug();
+    await clickButtonAndAssert(
+      'button1',
+      startHistoryLength + 1,
+      undefined,
+      'search',
+    );
+    await clickButtonAndAssert(
+      'button2',
+      startHistoryLength + 2,
+      undefined,
+      'search',
+    );
+
+    await userEvent.click(await findByText('reset-button'));
+  });
+
+  it('can replace state with searchParams', async () => {
+    const locationAtom = atomWithLocation({ replace: true });
+
+    const Navigation = () => {
+      const [location, setLocation] = useAtom(locationAtom);
+      const tab1Params = new URLSearchParams();
+      tab1Params.set('tab', '1');
+      const tab2Params = new URLSearchParams();
+      tab2Params.set('tab', '2');
+
+      return (
+        <>
+          <div>current searchParams in atomWithLocation:</div>
+          <div>{location.searchParams?.toString()}</div>
+          <button type="button" onClick={() => window.history.back()}>
+            back
+          </button>
+          <button
+            type="button"
+            onClick={() => setLocation({ searchParams: tab1Params })}
+          >
+            button1
+          </button>
+          <button
+            type="button"
+            onClick={() => setLocation({ searchParams: tab2Params })}
+          >
+            button2
+          </button>
+          <button
+            type="button"
+            onClick={() => setLocation(defaultLocation, { replace: false })}
+          >
+            reset-button
+          </button>
+        </>
+      );
+    };
+
+    const { findByText } = render(
+      <StrictMode>
+        <Navigation />
+      </StrictMode>,
+    );
+
+    const clickButtonAndAssert = clickButtonAndAssertTemplate(findByText);
+    const startHistoryLength = window.history.length;
+    assertStartState(startHistoryLength, findByText, 'searchParams');
+
+    await clickButtonAndAssert(
+      'button1',
+      startHistoryLength,
+      undefined,
+      'search',
+    );
+    await clickButtonAndAssert(
+      'button2',
+      startHistoryLength,
+      undefined,
+      'search',
+    );
+
+    await clickButtonAndAssert(
+      'back',
+      startHistoryLength,
+      { targetSearchParams: '2' },
+      'search',
+    );
+
+    await userEvent.click(await findByText('reset-button'));
   });
 });
 
