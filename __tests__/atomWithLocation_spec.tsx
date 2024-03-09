@@ -550,7 +550,7 @@ describe('atomWithLocation, searchParams', () => {
       );
     };
 
-    const { findByText, debug } = render(
+    const { findByText } = render(
       <StrictMode>
         <Navigation />
       </StrictMode>,
@@ -559,7 +559,6 @@ describe('atomWithLocation, searchParams', () => {
     const clickButtonAndAssert = clickButtonAndAssertTemplate(findByText);
     const startHistoryLength = window.history.length;
     await assertStartState(startHistoryLength, findByText, 'searchParams');
-    debug();
     await clickButtonAndAssert(
       'button1',
       startHistoryLength + 1,
