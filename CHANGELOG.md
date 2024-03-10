@@ -1,6 +1,7 @@
 # Change Log
 
 ## [Unreleased]
+- feat(atomWithLocation): support location.hash
 
 ## [0.5.4] - 2024-02-27
 ### Changed
