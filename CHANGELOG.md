@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.5.4] - 2024-02-27
+### Changed
+- feat(atomWithHash): initial value from hash #31
+
 ## [0.5.3] - 2024-02-18
 ### Changed
 - feat(atomWithLocation): override replace for specific navigations #28

@@ -26,6 +26,7 @@ export function atomWithHash<Value>(
   },
 ): WritableAtom<Value, [SetStateActionWithReset<Value>], void> {
   const serialize = options?.serialize || JSON.stringify;
+
   const deserialize = options?.deserialize || safeJSONParse(initialValue);
   const subscribe =
     options?.subscribe ||
@@ -51,15 +52,20 @@ export function atomWithHash<Value>(
   if (typeof setHashOption === 'function') {
     setHash = setHashOption;
   }
-  const strAtom = atom<string | null>(null);
+  const isLocationAvailable =
+    typeof window !== 'undefined' && !!window.location;
+
+  const strAtom = atom(
+    isLocationAvailable
+      ? new URLSearchParams(window.location.hash.slice(1)).get(key)
+      : null,
+  );
   strAtom.onMount = (setAtom) => {
-    if (typeof window === 'undefined' || !window.location) {
+    if (!isLocationAvailable) {
       return undefined;
     }
     const callback = () => {
-      const searchParams = new URLSearchParams(window.location.hash.slice(1));
-      const str = searchParams.get(key);
-      setAtom(str);
+      setAtom(new URLSearchParams(window.location.hash.slice(1)).get(key));
     };
     const unsubscribe = subscribe(callback);
     callback();

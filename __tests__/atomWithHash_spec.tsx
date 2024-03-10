@@ -1,4 +1,4 @@
-import React, { StrictMode, useMemo } from 'react';
+import React, { StrictMode, useEffect, useMemo, useState } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useAtom } from 'jotai/react';
@@ -185,6 +185,37 @@ describe('atomWithHash', () => {
 
     await user.type(screen.getByLabelText('b'), '1');
     await waitFor(() => expect(paramBMockFn).toBeCalledTimes(4));
+  });
+
+  it('sets initial value from hash', async () => {
+    window.location.hash = '#count=2';
+    const countAtom = atomWithHash('count', 0);
+
+    const Counter = () => {
+      const [count] = useAtom(countAtom);
+      const [countWasZero, setCountWasZero] = useState(false);
+
+      useEffect(() => {
+        if (count === 0) {
+          setCountWasZero(true);
+        }
+      }, [count]);
+      return (
+        <>
+          <div>count: {count}</div>
+          <div>count was zero: {countWasZero.toString()}</div>
+        </>
+      );
+    };
+
+    const { findByText } = render(
+      <StrictMode>
+        <Counter />
+      </StrictMode>,
+    );
+
+    await findByText('count: 2');
+    await findByText('count was zero: false');
   });
 });
 
