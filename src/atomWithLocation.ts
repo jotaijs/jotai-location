@@ -33,7 +33,7 @@ const applyLocation = (
     url.hash = location.hash;
   }
   if (options?.replace) {
-    window.history.replaceState(null, '', url);
+    window.history.replaceState(window.history.state, '', url);
   } else {
     window.history.pushState(null, '', url);
   }
