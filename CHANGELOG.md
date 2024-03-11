@@ -1,7 +1,8 @@
 # Change Log
 
 ## [Unreleased]
-- feat(atomWithLocation): support location.hash
+- feat(atomWithLocation): support location.hash #30
+- fix(atomWithLocation): replaceState function to use window.history.state instead of null #33
 
 ## [0.5.4] - 2024-02-27
 ### Changed
