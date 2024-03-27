@@ -2,18 +2,7 @@ import { atom } from 'jotai/vanilla';
 import type { WritableAtom } from 'jotai/vanilla';
 import { RESET } from 'jotai/vanilla/utils';
 
-type SetStateActionWithReset<Value> =
-  | Value
-  | typeof RESET
-  | ((prev: Value) => Value | typeof RESET);
-
-const safeJSONParse = (initialValue: unknown) => (str: string) => {
-  try {
-    return JSON.parse(str);
-  } catch (e) {
-    return initialValue;
-  }
-};
+import { SetStateActionWithReset, safeJSONParse } from './utils';
 
 export function atomWithHash<Value>(
   key: string,
