@@ -15,6 +15,37 @@ const safeJSONParse = (initialValue: unknown) => (str: string) => {
   }
 };
 
+export type SetHashOption =
+  | 'default'
+  | 'replaceState'
+  | ((searchParams: string) => void);
+
+export type AtomWithHashSetOptions = {
+  setHash?: SetHashOption;
+};
+
+export const setHashWithPush = (searchParams: string) => {
+  window.location.hash = searchParams;
+};
+
+export const setHashWithReplace = (searchParams: string): void => {
+  window.history.replaceState(
+    window.history.state,
+    '',
+    `${window.location.pathname}${window.location.search}#${searchParams}`,
+  );
+};
+
+function getSetHashFn(setHashOption?: SetHashOption) {
+  if (setHashOption === 'replaceState') {
+    return setHashWithReplace;
+  }
+  if (typeof setHashOption === 'function') {
+    return setHashOption;
+  }
+  return setHashWithPush;
+}
+
 export function atomWithHash<Value>(
   key: string,
   initialValue: Value,
@@ -22,9 +53,13 @@ export function atomWithHash<Value>(
     serialize?: (val: Value) => string;
     deserialize?: (str: string) => Value;
     subscribe?: (callback: () => void) => () => void;
-    setHash?: 'default' | 'replaceState' | ((searchParams: string) => void);
+    setHash?: SetHashOption;
   },
-): WritableAtom<Value, [SetStateActionWithReset<Value>], void> {
+): WritableAtom<
+  Value,
+  [SetStateActionWithReset<Value>, AtomWithHashSetOptions?],
+  void
+> {
   const serialize = options?.serialize || JSON.stringify;
 
   const deserialize = options?.deserialize || safeJSONParse(initialValue);
@@ -36,22 +71,7 @@ export function atomWithHash<Value>(
         window.removeEventListener('hashchange', callback);
       };
     });
-  const setHashOption = options?.setHash;
-  let setHash = (searchParams: string) => {
-    window.location.hash = searchParams;
-  };
-  if (setHashOption === 'replaceState') {
-    setHash = (searchParams) => {
-      window.history.replaceState(
-        window.history.state,
-        '',
-        `${window.location.pathname}${window.location.search}#${searchParams}`,
-      );
-    };
-  }
-  if (typeof setHashOption === 'function') {
-    setHash = setHashOption;
-  }
+
   const isLocationAvailable =
     typeof window !== 'undefined' && !!window.location;
 
@@ -77,7 +97,12 @@ export function atomWithHash<Value>(
   });
   return atom(
     (get) => get(valueAtom),
-    (get, set, update: SetStateActionWithReset<Value>) => {
+    (
+      get,
+      set,
+      update: SetStateActionWithReset<Value>,
+      setOptions?: AtomWithHashSetOptions,
+    ) => {
       const nextValue =
         typeof update === 'function'
           ? (update as (prev: Value) => Value | typeof RESET)(get(valueAtom))
@@ -91,6 +116,7 @@ export function atomWithHash<Value>(
         set(strAtom, str);
         searchParams.set(key, str);
       }
+      const setHash = getSetHashFn(setOptions?.setHash ?? options?.setHash);
       setHash(searchParams.toString());
     },
   );
