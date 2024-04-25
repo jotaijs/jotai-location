@@ -1,7 +1,7 @@
 {
   "name": "jotai-location",
   "description": "👻🔗",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "author": "Daishi Kato",
   "repository": {
     "type": "git",
@@ -32,7 +32,7 @@
     "test:debug": "run-s eslint tsc-test jest:debug",
     "eslint": "eslint --ext .js,.ts,.tsx .",
     "jest": "jest",
-    "jest:debug" : "node --inspect ./node_modules/jest/bin/jest.js --runInBand",
+    "jest:debug": "node --inspect ./node_modules/jest/bin/jest.js --runInBand",
     "tsc-test": "tsc --project . --noEmit",
     "examples:01_minimal": "DIR=01_minimal EXT=js webpack serve",
     "examples:02_typescript": "DIR=02_typescript EXT=tsx webpack serve",
