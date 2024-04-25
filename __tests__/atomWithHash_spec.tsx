@@ -133,6 +133,74 @@ describe('atomWithHash', () => {
       expect(window.location.search).toEqual('?q=foo');
       expect(window.location.hash).toEqual('#count=2');
     });
+    window.history.back();
+    await waitFor(() => {
+      expect(window.location.pathname).toEqual('/');
+      expect(window.location.search).toEqual('');
+      expect(window.location.hash).toEqual('');
+    });
+  });
+
+  it('keeping current path only for one set', async () => {
+    const countAtom = atomWithHash('count', 0);
+
+    const Counter = () => {
+      const [count, setCount] = useAtom(countAtom);
+      useEffect(() => {
+        setCount(1, { setHash: 'replaceState' });
+      }, []);
+      return (
+        <>
+          <div>count: {count}</div>
+          <button type="button" onClick={() => setCount((c) => c + 1)}>
+            button
+          </button>
+        </>
+      );
+    };
+
+    window.history.pushState(null, '', '/?q=foo');
+    const { findByText, getByText } = render(
+      <StrictMode>
+        <Counter />
+      </StrictMode>,
+    );
+
+    await findByText('count: 1');
+    await waitFor(() => {
+      expect(window.location.pathname).toEqual('/');
+      expect(window.location.search).toEqual('?q=foo');
+      expect(window.location.hash).toEqual('#count=1');
+    });
+    fireEvent.click(getByText('button'));
+    await findByText('count: 2');
+    expect(window.location.pathname).toEqual('/');
+    expect(window.location.search).toEqual('?q=foo');
+    expect(window.location.hash).toEqual('#count=2');
+
+    window.history.pushState(null, '', '/another');
+    await waitFor(() => {
+      expect(window.location.pathname).toEqual('/another');
+    });
+
+    window.history.back();
+    await waitFor(() => {
+      expect(window.location.pathname).toEqual('/');
+      expect(window.location.search).toEqual('?q=foo');
+      expect(window.location.hash).toEqual('#count=2');
+    });
+    window.history.back();
+    await waitFor(() => {
+      expect(window.location.pathname).toEqual('/');
+      expect(window.location.search).toEqual('?q=foo');
+      expect(window.location.hash).toEqual('#count=1');
+    });
+    window.history.back();
+    await waitFor(() => {
+      expect(window.location.pathname).toEqual('/');
+      expect(window.location.search).toEqual('');
+      expect(window.location.hash).toEqual('');
+    });
   });
 
   it('should optimize value to prevent unnecessary re-renders', async () => {
