@@ -1,8 +1,14 @@
 # Change Log
 
 ## [Unreleased]
+
+## [0.5.5] - 2024-04-25
+### Added
 - feat(atomWithLocation): support location.hash #30
+- feat(atomWithHash): allow the setHash option to be overridden on a per atom set basis #35 
+### Changed
 - fix(atomWithLocation): replaceState function to use window.history.state instead of null #33
+
 
 ## [0.5.4] - 2024-02-27
 ### Changed
