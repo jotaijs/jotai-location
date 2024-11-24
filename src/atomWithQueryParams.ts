@@ -1,6 +1,6 @@
-import type { SetStateAction, WritableAtom } from 'jotai';
-import { atom } from 'jotai';
-import { atomWithLocation } from 'jotai-location';
+import type { SetStateAction, WritableAtom } from 'jotai/vanilla';
+import { atom } from 'jotai/vanilla';
+import { atomWithLocation } from './atomWithLocation';
 
 // Create an atom for managing location state, including query parameters.
 const locationAtom = atomWithLocation();
