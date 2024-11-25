@@ -62,7 +62,7 @@ export const atomWithQueryParams = <T>(
           const resolvedDefault = resolveDefaultValue(currentValue);
 
           nextValue = String(
-            (value as (prev: T | undefined) => T)(resolvedDefault),
+            (value as (curr: T | undefined) => T)(resolvedDefault),
           );
         } else {
           // Otherwise, use the provided value directly.
