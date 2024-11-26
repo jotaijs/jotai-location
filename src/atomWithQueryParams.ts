@@ -42,7 +42,7 @@ export const atomWithQueryParams = <T>(
   return atom<T, [SetStateAction<T>], void>(
     // Read function: retrieves the current value of the query parameter.
     (get) => {
-      const searchParams = get(locationAtom).searchParams;
+      const { searchParams } = get(locationAtom);
       const paramValue = searchParams?.get(key);
 
       // Use the resolver function to handle type casting and defaults.
