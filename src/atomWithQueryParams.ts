@@ -32,7 +32,7 @@ export const atomWithQueryParams = <T>(
     // If the default value is a number, attempt to parse the value as a number.
     if (typeof defaultValue === 'number') {
       const parsed = Number(value);
-      return (isNaN(parsed) ? defaultValue : parsed) as T;
+      return (Number.isNaN(parsed) ? defaultValue : parsed) as T;
     }
 
     // Otherwise, return the value as a string (or other compatible type).
