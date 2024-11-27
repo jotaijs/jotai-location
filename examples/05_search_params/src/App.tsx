@@ -1,8 +1,8 @@
-import { atomWithQueryParams } from 'jotai-location';
+import { atomWithSearchParams } from 'jotai-location';
 import { useAtom } from 'jotai/react';
 import React from 'react';
 
-const pageAtom = atomWithQueryParams('page', 1);
+const pageAtom = atomWithSearchParams('page', 1);
 
 const Page = () => {
   const [page, setPage] = useAtom(pageAtom);
