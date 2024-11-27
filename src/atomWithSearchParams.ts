@@ -2,23 +2,23 @@ import type { SetStateAction, WritableAtom } from 'jotai/vanilla';
 import { atom } from 'jotai/vanilla';
 import { atomWithLocation } from './atomWithLocation';
 
-// Create an atom for managing location state, including query parameters.
+// Create an atom for managing location state, including search parameters.
 const locationAtom = atomWithLocation();
 
 /**
- * Creates a writable Jotai atom to manage a query parameter in the URL.
+ * Creates a writable Jotai atom to manage a search parameter in the URL.
  *
- * @template T - The type of the query parameter value (e.g., string or number).
- * @param key - The name of the query parameter to manage.
- * @param defaultValue - The default value for the query parameter if not present in the URL.
- * @returns A writable atom for reading and updating the query parameter.
+ * @template T - The type of the s parameter value (e.g., string or number).
+ * @param key - The name of the search parameter to manage.
+ * @param defaultValue - The default value for the search parameter if not present in the URL.
+ * @returns A writable atom for reading and updating the search parameter.
  */
-export const atomWithQueryParams = <T>(
+export const atomWithSearchParams = <T>(
   key: string,
   defaultValue: T,
 ): WritableAtom<T, [SetStateAction<T>], void> => {
   /**
-   * Resolves the value of a query parameter based on its type.
+   * Resolves the value of a search parameter based on its type.
    *
    * @param value - The raw string value from the URL (or `null` if absent).
    * @returns The resolved value cast to type `T`.
@@ -40,7 +40,7 @@ export const atomWithQueryParams = <T>(
   };
 
   return atom<T, [SetStateAction<T>], void>(
-    // Read function: retrieves the current value of the query parameter.
+    // Read function: retrieves the current value of the search parameter.
     (get) => {
       const { searchParams } = get(locationAtom);
       const paramValue = searchParams?.get(key);
@@ -48,7 +48,7 @@ export const atomWithQueryParams = <T>(
       // Use the resolver function to handle type casting and defaults.
       return resolveDefaultValue(paramValue);
     },
-    // Write function: updates the query parameter in the URL.
+    // Write function: updates the search parameter in the URL.
     (_, set, value) => {
       set(locationAtom, (prev) => {
         // Clone the current search parameters to avoid mutating the original object.
@@ -69,17 +69,12 @@ export const atomWithQueryParams = <T>(
           nextValue = String(value);
         }
 
-        // Update the query parameter with the computed value.
+        // Update the search parameter with the computed value.
         newSearchParams.set(key, nextValue);
 
-        // Return a new location state with the updated query parameters.
+        // Return a new location state with the updated search parameters.
         return { ...prev, searchParams: newSearchParams };
       });
     },
   );
 };
-
-// Usage
-// const pageAtom = atomWithQueryParams('page', 1);
-// const userIdAtom = atomWithQueryParams('userId', "1");
-// const nameAtom = atomWithQueryParams<string>('name', "John");
