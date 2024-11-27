@@ -6,73 +6,92 @@ import { atomWithLocation } from './atomWithLocation';
 const locationAtom = atomWithLocation();
 
 /**
- * Creates a writable Jotai atom to manage a search parameter in the URL.
+ * Creates an atom that manages a single search parameter.
  *
- * @template T - The type of the s parameter value (e.g., string or number).
- * @param key - The name of the search parameter to manage.
- * @param defaultValue - The default value for the search parameter if not present in the URL.
- * @returns A writable atom for reading and updating the search parameter.
+ * The atom automatically infers the type of the search parameter based on the
+ * type of `defaultValue`.
+ *
+ * The atom's read function returns the current value of the search parameter.
+ * The atom's write function updates the search parameter in the URL.
+ *
+ * @param key - The key of the search parameter.
+ * @param defaultValue - The default value of the search parameter.
+ * @returns A writable atom that manages the search parameter.
  */
 export const atomWithSearchParams = <T>(
   key: string,
   defaultValue: T,
 ): WritableAtom<T, [SetStateAction<T>], void> => {
   /**
-   * Resolves the value of a search parameter based on its type.
+   * Resolves the value of a search parameter based on the type of `defaultValue`.
    *
-   * @param value - The raw string value from the URL (or `null` if absent).
-   * @returns The resolved value cast to type `T`.
+   * @param value - The raw value from the URL (could be `null` or `undefined`).
+   * @returns The resolved value matching the type of `defaultValue`.
    */
-  const resolveDefaultValue = (value: string | null | undefined): T => {
+  const resolveValue = (value: string | null | undefined): T => {
     // If the value is null or undefined, return the default value.
     if (value === null || value === undefined) {
       return defaultValue;
     }
 
-    // If the default value is a number, attempt to parse the value as a number.
+    // Determine the type of the default value and parse accordingly.
     if (typeof defaultValue === 'number') {
-      const parsed = Number(value);
-      return (Number.isNaN(parsed) ? defaultValue : parsed) as T;
+      return Number(value) as T;
     }
 
-    // Otherwise, return the value as a string (or other compatible type).
-    return value as T;
+    if (typeof defaultValue === 'boolean') {
+      return (value === 'true') as T;
+    }
+
+    if (typeof defaultValue === 'string') {
+      return value as T;
+    }
+
+    // If the default value is an object, try to parse it as JSON.
+    return JSON.parse(value) as T;
+  };
+
+  const parseValue = (value: T): string => {
+    if (
+      typeof value !== 'number' &&
+      typeof value !== 'boolean' &&
+      typeof value !== 'string'
+    ) {
+      // If the value is not a basic type, try to stringify it as JSON.
+      return JSON.stringify(value);
+    }
+    return String(value);
   };
 
   return atom<T, [SetStateAction<T>], void>(
-    // Read function: retrieves the current value of the search parameter.
+    // Read function: Retrieves the current value of the search parameter.
     (get) => {
       const { searchParams } = get(locationAtom);
-      const paramValue = searchParams?.get(key);
 
-      // Use the resolver function to handle type casting and defaults.
-      return resolveDefaultValue(paramValue);
+      // Resolve the value using the parsing logic.
+      return resolveValue(searchParams?.get(key));
     },
-    // Write function: updates the search parameter in the URL.
+    // Write function: Updates the search parameter in the URL.
     (_, set, value) => {
       set(locationAtom, (prev) => {
-        // Clone the current search parameters to avoid mutating the original object.
+        // Create a new instance of URLSearchParams to avoid mutating the original.
         const newSearchParams = new URLSearchParams(prev.searchParams);
-        const currentValue = newSearchParams.get(key);
 
-        let nextValue: string;
+        let nextValue;
 
         if (typeof value === 'function') {
           // If the new value is a function, compute it based on the current value.
-          const resolvedDefault = resolveDefaultValue(currentValue);
-
-          nextValue = String(
-            (value as (curr: T | undefined) => T)(resolvedDefault),
-          );
+          const currentValue = resolveValue(newSearchParams.get(key));
+          nextValue = (value as (curr: T) => T)(currentValue);
         } else {
           // Otherwise, use the provided value directly.
-          nextValue = String(value);
+          nextValue = value;
         }
 
         // Update the search parameter with the computed value.
-        newSearchParams.set(key, nextValue);
+        newSearchParams.set(key, parseValue(nextValue));
 
-        // Return a new location state with the updated search parameters.
+        // Return the updated location state with new search parameters.
         return { ...prev, searchParams: newSearchParams };
       });
     },
