@@ -39,8 +39,11 @@ export const atomWithSearchParams = <T>(
       return Number(value) as T;
     }
 
+    // If the default value is a boolean, check if the value is `true` or `false`.
     if (typeof defaultValue === 'boolean') {
-      return (value === 'true') as T;
+      if (value === 'true') return true as T;
+      if (value === 'false') return false as T;
+      return defaultValue;
     }
 
     if (typeof defaultValue === 'string') {
