@@ -29,8 +29,8 @@ export const atomWithSearchParams = <T>(
    * @returns The resolved value matching the type of `defaultValue`.
    */
   const resolveValue = (value: string | null | undefined): T => {
-    // If the value is null or undefined, return the default value.
-    if (value === null || value === undefined) {
+    // If the value is null, undefined, or not a string, return the default value.
+    if (value === null || value === undefined || typeof value !== 'string') {
       return defaultValue;
     }
 
