@@ -34,36 +34,85 @@ export const atomWithSearchParams = <T>(
       return defaultValue;
     }
 
-    // Determine the type of the default value and parse accordingly.
-    if (typeof defaultValue === 'number') {
-      return Number(value) as T;
-    }
+    try {
+      // Determine the type of the default value and parse accordingly.
+      if (typeof defaultValue === 'number') {
+        if (value === '') {
+          console.warn(
+            `Empty string provided for key "${key}". Falling back to default value.`,
+          );
+          return defaultValue;
+        }
 
-    // If the default value is a boolean, check if the value is `true` or `false`.
-    if (typeof defaultValue === 'boolean') {
-      if (value === 'true') return true as T;
-      if (value === 'false') return false as T;
+        const parsed = Number(value);
+        if (!Number.isNaN(parsed)) {
+          return parsed as T;
+        }
+
+        console.warn(`Expected a number for key "${key}", got "${value}".`);
+        return defaultValue;
+      }
+
+      // If the default value is a boolean, check if the value is `true` or `false`.
+      if (typeof defaultValue === 'boolean') {
+        if (value === 'true') return true as T;
+        if (value === 'false') return false as T;
+
+        console.warn(`Expected a boolean for key "${key}", got "${value}".`);
+        return defaultValue;
+      }
+
+      if (typeof defaultValue === 'string') {
+        return value as T;
+      }
+
+      // Handle object types (assume JSON if defaultValue is an object)
+      if (typeof defaultValue === 'object') {
+        const parsed = JSON.parse(value);
+        if (parsed && typeof parsed === 'object') {
+          return parsed as T;
+        }
+        console.warn(`Expected an object for key "${key}", got "${value}".`);
+        return defaultValue;
+      }
+    } catch (err) {
+      console.error(`Failed to resolve value for key "${key}":`, err);
       return defaultValue;
     }
 
-    if (typeof defaultValue === 'string') {
-      return value as T;
-    }
-
-    // If the default value is an object, try to parse it as JSON.
-    return JSON.parse(value) as T;
+    // Fallback to default value for unsupported types
+    console.warn(`Unsupported defaultValue type for key "${key}".`);
+    return defaultValue;
   };
 
+  /**
+   * Converts the value into a string for use in the URL.
+   *
+   * Includes runtime type validation to ensure only compatible types are passed.
+   *
+   * @param value - The value to be serialized.
+   * @returns The stringified value.
+   */
   const parseValue = (value: T): string => {
     if (
-      typeof value !== 'number' &&
-      typeof value !== 'boolean' &&
-      typeof value !== 'string'
+      typeof value === 'number' ||
+      typeof value === 'boolean' ||
+      typeof value === 'string'
     ) {
-      // If the value is not a basic type, try to stringify it as JSON.
-      return JSON.stringify(value);
+      return String(value);
     }
-    return String(value);
+
+    if (typeof value === 'object') {
+      try {
+        return JSON.stringify(value);
+      } catch (err) {
+        console.error(`Failed to stringify object for key "${key}":`, err);
+        throw new Error(`Cannot serialize value for key "${key}".`);
+      }
+    }
+
+    console.warn(`Unsupported value type for key "${key}":`, typeof value);
+    throw new Error(`Unsupported value type for key "${key}".`);
   };
 
   return atom<T, [SetStateAction<T>], void>(
