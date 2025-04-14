@@ -36,7 +36,7 @@ export const atomWithSearchParams = <T extends string | number | boolean>(
    */
   const resolveValue = (value: string | null | undefined): T => {
     // If the value is null, undefined, or not a string, return the default value.
-    if (typeof value !== 'string') {
+    if (value === null || value === undefined) {
       return defaultValue;
     }
 
