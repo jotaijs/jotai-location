@@ -13,9 +13,6 @@
     "exactOptionalPropertyTypes": true,
     "jsx": "react",
     "baseUrl": ".",
-    "paths": {
-      "jotai-location": ["./src"]
-    },
     "skipLibCheck": true
   }
 }

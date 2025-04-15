@@ -1,24 +1,18 @@
 {
-  "name": "jotai-location-example",
-  "version": "0.1.0",
+  "name": "example",
+  "version": "0.0.0",
   "private": true,
+  "type": "module",
   "dependencies": {
     "jotai": "latest",
     "jotai-location": "latest",
     "react": "latest",
-    "react-dom": "latest",
-    "react-scripts": "latest"
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "vite": "latest"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "browserslist": [
-    ">0.2%",
-    "not dead",
-    "not ie <= 11",
-    "not op_mini all"
-  ]
+    "dev": "vite"
+  }
 }
