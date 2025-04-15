@@ -8,9 +8,6 @@ function warning(...data: any[]) {
   }
 }
 
-// Create an atom for managing location state, including search parameters.
-const locationAtom = atomWithLocation();
-
 /**
  * Creates an atom that manages a single search parameter.
  *
@@ -28,6 +25,9 @@ export const atomWithSearchParams = <T extends string | number | boolean>(
   key: string,
   defaultValue: T,
 ): WritableAtom<T, [SetStateAction<T>], void> => {
+  // Create an atom for managing location state, including search parameters.
+  const locationAtom = atomWithLocation();
+
   /**
    * Resolves the value of a search parameter based on the type of `defaultValue`.
    *
