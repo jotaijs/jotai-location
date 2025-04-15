@@ -42,7 +42,8 @@
     "no-use-before-define": "off",
     "no-unused-vars": "off",
     "no-redeclare": "off",
-    "react/function-component-definition": ["error", { "namedComponents": "arrow-function" }]
+    "react/function-component-definition": ["error", { "namedComponents": "arrow-function" }],
+    "import/no-extraneous-dependencies": ["error", { "devDependencies": true }]
   },
   "overrides": [{
     "files": ["__tests__/**/*"],
