@@ -1,7 +1,7 @@
 import { atom } from 'jotai/vanilla';
 import type { SetStateAction, WritableAtom } from 'jotai/vanilla';
 
-type Location = {
+export type Location = {
   pathname?: string;
   searchParams?: URLSearchParams;
   hash?: string;
@@ -44,7 +44,7 @@ const subscribe = (callback: () => void) => {
   return () => window.removeEventListener('popstate', callback);
 };
 
-type Options<T> = {
+export type Options<T> = {
   preloaded?: T;
   replace?: boolean;
   getLocation?: () => T;
