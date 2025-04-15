@@ -1,6 +1,10 @@
 import type { SetStateAction, WritableAtom } from 'jotai/vanilla';
 import { atom } from 'jotai/vanilla';
-import { atomWithLocation } from './atomWithLocation';
+import {
+  atomWithLocation,
+  type Options,
+  type Location,
+} from './atomWithLocation';
 
 function warning(...data: any[]) {
   if (process.env.NODE_ENV !== 'production') {
@@ -24,9 +28,10 @@ function warning(...data: any[]) {
 export const atomWithSearchParams = <T extends string | number | boolean>(
   key: string,
   defaultValue: T,
+  options?: Options<Location>,
 ): WritableAtom<T, [SetStateAction<T>], void> => {
   // Create an atom for managing location state, including search parameters.
-  const locationAtom = atomWithLocation();
+  const locationAtom = atomWithLocation(options);
 
   /**
    * Resolves the value of a search parameter based on the type of `defaultValue`.
