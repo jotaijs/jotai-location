@@ -1,13 +1,28 @@
-import React, { StrictMode, useEffect, useMemo, useState } from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { StrictMode, useEffect, useMemo, useState } from 'react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
+import { userEvent } from '@testing-library/user-event';
 import { useAtom } from 'jotai/react';
 import { RESET } from 'jotai/vanilla/utils';
-import { atomWithHash } from '../src/index';
+import { atomWithHash } from '../src/index.js';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+function resetWindow() {
+  window.history.pushState(null, '', '/');
+  window.location.search = '';
+  window.location.hash = '';
+}
+
+afterEach(cleanup);
 
 describe('atomWithHash', () => {
   beforeEach(() => {
-    window.location.hash = '';
+    resetWindow();
   });
 
   it('simple count', async () => {
@@ -28,23 +43,23 @@ describe('atomWithHash', () => {
       );
     };
 
-    const { findByText, getByText } = render(
+    render(
       <StrictMode>
         <Counter />
       </StrictMode>,
     );
 
-    await findByText('count: 1');
+    await screen.findByText('count: 1');
 
-    fireEvent.click(getByText('button'));
-    await findByText('count: 2');
+    fireEvent.click(screen.getByText('button'));
+    await screen.findByText('count: 2');
     expect(window.location.hash).toEqual('#count=2');
 
     window.location.hash = 'count=3';
-    await findByText('count: 3');
+    await screen.findByText('count: 3');
 
-    fireEvent.click(getByText('reset'));
-    await findByText('count: 1');
+    fireEvent.click(screen.getByText('reset'));
+    await screen.findByText('count: 1');
     expect(window.location.hash).toEqual('');
   });
 
@@ -66,30 +81,30 @@ describe('atomWithHash', () => {
       );
     };
 
-    const { findByText, getByText, queryByText } = render(
+    render(
       <StrictMode>
         <Counter />
       </StrictMode>,
     );
 
-    await findByText('visible');
+    await screen.findByText('visible');
 
-    fireEvent.click(getByText('button'));
+    fireEvent.click(screen.getByText('button'));
 
     await waitFor(() => {
-      expect(queryByText('visible')).toBeNull();
+      expect(screen.queryByText('visible')).toBeNull();
     });
 
     expect(window.location.hash).toEqual('#isVisible=false');
 
-    fireEvent.click(getByText('button'));
-    await findByText('visible');
+    fireEvent.click(screen.getByText('button'));
+    await screen.findByText('visible');
     expect(window.location.hash).toEqual('#isVisible=true');
 
-    fireEvent.click(getByText('button'));
+    fireEvent.click(screen.getByText('button'));
 
-    fireEvent.click(getByText('reset'));
-    await findByText('visible');
+    fireEvent.click(screen.getByText('reset'));
+    await screen.findByText('visible');
     expect(window.location.hash).toEqual('');
   });
 
@@ -108,7 +123,7 @@ describe('atomWithHash', () => {
       );
     };
 
-    const { findByText, getByText } = render(
+    render(
       <StrictMode>
         <Counter />
       </StrictMode>,
@@ -116,11 +131,13 @@ describe('atomWithHash', () => {
 
     window.history.pushState(null, '', '/?q=foo');
 
-    fireEvent.click(getByText('button'));
-    await findByText('count: 2');
-    expect(window.location.pathname).toEqual('/');
-    expect(window.location.search).toEqual('?q=foo');
-    expect(window.location.hash).toEqual('#count=2');
+    fireEvent.click(screen.getByText('button'));
+    await screen.findByText('count: 2');
+    await waitFor(() => {
+      expect(window.location.pathname).toEqual('/');
+      expect(window.location.search).toEqual('?q=foo');
+      expect(window.location.hash).toEqual('#count=2');
+    });
 
     window.history.pushState(null, '', '/another');
     await waitFor(() => {
@@ -160,20 +177,20 @@ describe('atomWithHash', () => {
     };
 
     window.history.pushState(null, '', '/?q=foo');
-    const { findByText, getByText } = render(
+    render(
       <StrictMode>
         <Counter />
       </StrictMode>,
     );
 
-    await findByText('count: 1');
+    await screen.findByText('count: 1');
     await waitFor(() => {
       expect(window.location.pathname).toEqual('/');
       expect(window.location.search).toEqual('?q=foo');
       expect(window.location.hash).toEqual('#count=1');
     });
-    fireEvent.click(getByText('button'));
-    await findByText('count: 2');
+    fireEvent.click(screen.getByText('button'));
+    await screen.findByText('count: 2');
     expect(window.location.pathname).toEqual('/');
     expect(window.location.search).toEqual('?q=foo');
     expect(window.location.hash).toEqual('#count=2');
@@ -210,14 +227,14 @@ describe('atomWithHash', () => {
       paramAMockFn,
       paramBMockFn,
     }: {
-      paramAMockFn: jest.Mock;
-      paramBMockFn: jest.Mock;
+      paramAMockFn: ReturnType<typeof vi.fn>;
+      paramBMockFn: ReturnType<typeof vi.fn>;
     }) => {
       const [paramA, setParamA] = useAtom(paramAHashAtom);
       const [paramB, setParamB] = useAtom(paramBHashAtom);
 
-      useMemo(paramAMockFn, [paramA]);
-      useMemo(paramBMockFn, [paramB]);
+      useMemo(() => paramAMockFn(), [paramA]);
+      useMemo(() => paramBMockFn(), [paramB]);
 
       return (
         <>
@@ -235,8 +252,8 @@ describe('atomWithHash', () => {
       );
     };
 
-    const paramAMockFn = jest.fn();
-    const paramBMockFn = jest.fn();
+    const paramAMockFn = vi.fn();
+    const paramBMockFn = vi.fn();
     const user = userEvent.setup();
 
     render(
@@ -248,11 +265,11 @@ describe('atomWithHash', () => {
     await user.type(screen.getByLabelText('a'), '1');
 
     // StrictMode in React 18 calls useMemo twice, so we're accounting for 2 extra useMemo calls
-    await waitFor(() => expect(paramAMockFn).toBeCalledTimes(4));
-    expect(paramBMockFn).toBeCalledTimes(2);
+    await waitFor(() => expect(paramAMockFn).toHaveBeenCalledTimes(4));
+    expect(paramBMockFn).toHaveBeenCalledTimes(2);
 
     await user.type(screen.getByLabelText('b'), '1');
-    await waitFor(() => expect(paramBMockFn).toBeCalledTimes(4));
+    await waitFor(() => expect(paramBMockFn).toHaveBeenCalledTimes(4));
   });
 
   it('sets initial value from hash', async () => {
@@ -288,9 +305,11 @@ describe('atomWithHash', () => {
 });
 
 describe('atomWithHash without window', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let savedWindow: any;
   beforeEach(() => {
     savedWindow = global.window;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     delete (global as any).window;
   });
   afterEach(() => {

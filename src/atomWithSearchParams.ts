@@ -4,9 +4,9 @@ import {
   atomWithLocation,
   type Options,
   type Location,
-} from './atomWithLocation';
+} from './atomWithLocation.js';
 
-function warning(...data: any[]) {
+function warning(...data: unknown[]) {
   if (process.env.NODE_ENV !== 'production') {
     console.warn(...data);
   }

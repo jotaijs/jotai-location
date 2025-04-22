@@ -6,7 +6,6 @@ import {
 } from 'react-router-dom';
 import { atomWithLocation } from 'jotai-location';
 import { useAtomValue } from 'jotai';
-import * as React from 'react';
 import history from './routerHistory';
 
 const Route1 = <h1>Hello</h1>;

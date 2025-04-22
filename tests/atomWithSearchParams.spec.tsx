@@ -1,8 +1,11 @@
-import { useAtom } from 'jotai';
-import React, { StrictMode } from 'react';
-import { render } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { atomWithSearchParams } from '../src/atomWithSearchParams';
+import { cleanup, render, screen } from '@testing-library/react';
+import { userEvent } from '@testing-library/user-event';
+import { useAtom } from 'jotai/react';
+import { StrictMode } from 'react';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { atomWithSearchParams } from '../src/index.js';
+
+afterEach(cleanup);
 
 function resetWindow() {
   window.history.pushState(null, '', '/');
@@ -45,22 +48,26 @@ describe('atomWithSearchParams', () => {
       );
     };
 
-    const { findByText } = render(
+    render(
       <StrictMode>
         <Navigation />
       </StrictMode>,
     );
 
-    await userEvent.click(await findByText('setString'));
-    await findByText('current searchParam in atomWithSearchParams: test');
+    await userEvent.click(await screen.findByText('setString'));
+    await screen.findByText(
+      'current searchParam in atomWithSearchParams: test',
+    );
     expect(window.location.search).toContain('string=test');
 
-    await userEvent.click(await findByText('setNumber'));
-    await findByText('current searchParam in atomWithSearchParams: 42');
+    await userEvent.click(await screen.findByText('setNumber'));
+    await screen.findByText('current searchParam in atomWithSearchParams: 42');
     expect(window.location.search).toContain('number=42');
 
-    await userEvent.click(await findByText('setBoolean'));
-    await findByText('current searchParam in atomWithSearchParams: true');
+    await userEvent.click(await screen.findByText('setBoolean'));
+    await screen.findByText(
+      'current searchParam in atomWithSearchParams: true',
+    );
     expect(window.location.search).toContain('boolean=true');
   });
 
@@ -79,18 +86,18 @@ describe('atomWithSearchParams', () => {
       );
     };
 
-    const { findByText } = render(
+    render(
       <StrictMode>
         <Navigation />
       </StrictMode>,
     );
 
-    await userEvent.click(await findByText('increment'));
-    await findByText('current searchParam in atomWithSearchParams: 1');
+    await userEvent.click(await screen.findByText('increment'));
+    await screen.findByText('current searchParam in atomWithSearchParams: 1');
     expect(window.location.search).toContain('count=1');
 
-    await userEvent.click(await findByText('increment'));
-    await findByText('current searchParam in atomWithSearchParams: 2');
+    await userEvent.click(await screen.findByText('increment'));
+    await screen.findByText('current searchParam in atomWithSearchParams: 2');
     expect(window.location.search).toContain('count=2');
   });
 });

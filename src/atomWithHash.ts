@@ -10,7 +10,7 @@ type SetStateActionWithReset<Value> =
 const safeJSONParse = (initialValue: unknown) => (str: string) => {
   try {
     return JSON.parse(str);
-  } catch (e) {
+  } catch {
     return initialValue;
   }
 };
@@ -25,15 +25,13 @@ export type AtomWithHashSetOptions = {
 };
 
 export const setHashWithPush = (searchParams: string) => {
-  window.location.hash = searchParams;
+  const newUrl = `${window.location.pathname}${window.location.search}${searchParams ? `#${searchParams}` : ''}`;
+  window.history.pushState(window.history.state, '', newUrl);
 };
 
 export const setHashWithReplace = (searchParams: string): void => {
-  window.history.replaceState(
-    window.history.state,
-    '',
-    `${window.location.pathname}${window.location.search}#${searchParams}`,
-  );
+  const newUrl = `${window.location.pathname}${window.location.search}${searchParams ? `#${searchParams}` : ''}`;
+  window.history.replaceState(window.history.state, '', newUrl);
 };
 
 function getSetHashFn(setHashOption?: SetHashOption) {
