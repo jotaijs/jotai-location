@@ -1,4 +1,3 @@
-import React from 'react';
 import { useAtom } from 'jotai/react';
 import { atomWithLocation } from 'jotai-location';
 

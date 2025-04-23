@@ -1,6 +1,5 @@
 import { atomWithSearchParams } from 'jotai-location';
 import { useAtom } from 'jotai/react';
-import React from 'react';
 
 const pageAtom = atomWithSearchParams<number>('page', 1);
 

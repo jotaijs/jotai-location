@@ -1,3 +1,3 @@
-export { atomWithLocation } from './atomWithLocation';
-export { atomWithHash } from './atomWithHash';
-export { atomWithSearchParams } from './atomWithSearchParams';
+export { atomWithLocation } from './atomWithLocation.js';
+export { atomWithHash } from './atomWithHash.js';
+export { atomWithSearchParams } from './atomWithSearchParams.js';
