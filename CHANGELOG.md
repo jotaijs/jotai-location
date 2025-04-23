@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2025-04-23
+
+### Added
+
+- feat(atomWithSearchParams) add support for Search Params #41
+
+### Changed
+
+- update to morden setup #47 #44
+
 ## [0.5.5] - 2024-04-25
 
 ### Added
