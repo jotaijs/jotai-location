@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.6.1] - 2025-05-28
+
+### Changed
+
+- feat(atomWithSearchParams): add applyLocation function to merge existing searchParams (#50)
+
 ## [0.6.0] - 2025-04-23
 
 ### Added
