@@ -11,6 +11,32 @@ function warning(...data: unknown[]) {
     console.warn(...data);
   }
 }
+const applyLocation = (
+  location: Location,
+  options?: { replace?: boolean },
+): void => {
+  const url = new URL(window.location.href);
+  if ('pathname' in location) {
+    url.pathname = location.pathname;
+  }
+  if ('searchParams' in location) {
+    const existingParams = new URLSearchParams(url.search);
+    const newParams = location.searchParams;
+
+    for (const [key, value] of newParams.entries()) {
+      existingParams.set(key, value);
+    }
+    url.search = existingParams.toString();
+  }
+  if ('hash' in location) {
+    url.hash = location.hash;
+  }
+  if (options?.replace) {
+    window.history.replaceState(window.history.state, '', url);
+  } else {
+    window.history.pushState(null, '', url);
+  }
+};
 
 /**
  * Creates an atom that manages a single search parameter.
@@ -31,7 +57,10 @@ export const atomWithSearchParams = <T extends string | number | boolean>(
   options?: Options<Location>,
 ): WritableAtom<T, [SetStateAction<T>], void> => {
   // Create an atom for managing location state, including search parameters.
-  const locationAtom = atomWithLocation(options);
+  const locationAtom = atomWithLocation({
+    ...options,
+    applyLocation: options?.applyLocation ?? applyLocation,
+  });
 
   /**
    * Resolves the value of a search parameter based on the type of `defaultValue`.

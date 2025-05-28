@@ -1,19 +1,30 @@
 import { atomWithSearchParams } from 'jotai-location';
 import { useAtom } from 'jotai/react';
 
-const pageAtom = atomWithSearchParams<number>('page', 1);
+const oneAtom = atomWithSearchParams<number>('one', 0);
+const twoAtom = atomWithSearchParams<number>('two', 0);
+const threeAtom = atomWithSearchParams<number>('three', 0);
 
 const Page = () => {
-  const [page, setPage] = useAtom(pageAtom);
+  const [one, setOne] = useAtom(oneAtom);
+  const [two, setTwo] = useAtom(twoAtom);
+  const [three, setThree] = useAtom(threeAtom);
   return (
-    <div>
-      <h1>Search Params Example</h1>
-      <div>Page {page}</div>
-      <button type="button" onClick={() => setPage((c) => c + 1)}>
-        +1
+    <>
+      <div>
+        one: {one}, two: {two}, three: {three}
+      </div>
+      <button
+        type="button"
+        onClick={() => {
+          setOne((c) => c + 1);
+          setTwo((c) => c + 1);
+          setThree((c) => c + 1);
+        }}
+      >
+        update
       </button>
-      <p>See the url hash, change it there</p>
-    </div>
+    </>
   );
 };
 
