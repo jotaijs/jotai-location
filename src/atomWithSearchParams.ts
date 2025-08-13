@@ -5,38 +5,32 @@ import {
   type Options,
   type Location,
 } from './atomWithLocation.js';
+import type { ResolvePrimitive } from './utils/type.js';
+import { warning } from './utils/logger.js';
 
-function warning(...data: unknown[]) {
-  if (process.env.NODE_ENV !== 'production') {
-    console.warn(...data);
-  }
-}
-const applyLocation = (
-  location: Location,
-  options?: { replace?: boolean },
-): void => {
-  const url = new URL(window.location.href);
-  if ('pathname' in location) {
-    url.pathname = location.pathname;
-  }
-  if ('searchParams' in location) {
-    const existingParams = new URLSearchParams(url.search);
-    const newParams = location.searchParams;
-
-    for (const [key, value] of newParams.entries()) {
-      existingParams.set(key, value);
+const generateApplyLocation =
+  (key: string) =>
+  (location: Location, options?: { replace?: boolean }): void => {
+    const url = new URL(window.location.href);
+    if ('pathname' in location) {
+      url.pathname = location.pathname;
     }
-    url.search = existingParams.toString();
-  }
-  if ('hash' in location) {
-    url.hash = location.hash;
-  }
-  if (options?.replace) {
-    window.history.replaceState(window.history.state, '', url);
-  } else {
-    window.history.pushState(null, '', url);
-  }
-};
+    if ('searchParams' in location) {
+      const existingParams = new URLSearchParams(url.search);
+      const newParams = location.searchParams;
+
+      existingParams.set(key, newParams.get(key) ?? '');
+      url.search = existingParams.toString();
+    }
+    if ('hash' in location) {
+      url.hash = location.hash;
+    }
+    if (options?.replace) {
+      window.history.replaceState(window.history.state, '', url);
+    } else {
+      window.history.pushState(null, '', url);
+    }
+  };
 
 /**
  * Creates an atom that manages a single search parameter.
@@ -55,11 +49,16 @@ export const atomWithSearchParams = <T extends string | number | boolean>(
   key: string,
   defaultValue: T,
   options?: Options<Location>,
-): WritableAtom<T, [SetStateAction<T>], void> => {
+): WritableAtom<
+  ResolvePrimitive<T>,
+  [SetStateAction<ResolvePrimitive<T>>],
+  void
+> => {
+  type PrimitiveType = ResolvePrimitive<T>;
   // Create an atom for managing location state, including search parameters.
   const locationAtom = atomWithLocation({
     ...options,
-    applyLocation: options?.applyLocation ?? applyLocation,
+    applyLocation: options?.applyLocation ?? generateApplyLocation(key),
   });
 
   /**
@@ -68,10 +67,10 @@ export const atomWithSearchParams = <T extends string | number | boolean>(
    * @param value - The raw value from the URL (could be `null` or `undefined`).
    * @returns The resolved value matching the type of `defaultValue`.
    */
-  const resolveValue = (value: string | null | undefined): T => {
+  const resolveValue = (value: string | null | undefined): PrimitiveType => {
     // If the value is null, undefined, or not a string, return the default value.
     if (value === null || value === undefined) {
-      return defaultValue;
+      return defaultValue as unknown as PrimitiveType;
     }
 
     // Determine the type of the default value and parse accordingly.
@@ -80,34 +79,34 @@ export const atomWithSearchParams = <T extends string | number | boolean>(
         warning(
           `Empty string provided for key "${key}". Falling back to default value.`,
         );
-        return defaultValue;
+        return defaultValue as unknown as PrimitiveType;
       }
 
       const parsed = Number(value);
       if (!Number.isNaN(parsed)) {
-        return parsed as T;
+        return parsed as PrimitiveType;
       }
 
       warning(`Expected a number for key "${key}", got "${value}".`);
-      return defaultValue;
+      return defaultValue as unknown as PrimitiveType;
     }
 
     // If the default value is a boolean, check if the value is `true` or `false`.
     if (typeof defaultValue === 'boolean') {
-      if (value === 'true') return true as T;
-      if (value === 'false') return false as T;
+      if (value === 'true') return true as PrimitiveType;
+      if (value === 'false') return false as PrimitiveType;
 
       warning(`Expected a boolean for key "${key}", got "${value}".`);
-      return defaultValue;
+      return defaultValue as unknown as PrimitiveType;
     }
 
     if (typeof defaultValue === 'string') {
-      return value as T;
+      return value as PrimitiveType;
     }
 
     // Fallback to default value for unsupported types
     warning(`Unsupported defaultValue type for key "${key}".`);
-    return defaultValue;
+    return defaultValue as unknown as PrimitiveType;
   };
 
   /**
@@ -118,7 +117,7 @@ export const atomWithSearchParams = <T extends string | number | boolean>(
    * @param value - The value to be serialized.
    * @returns The stringified value.
    */
-  const parseValue = (value: T): string => {
+  const parseValue = (value: PrimitiveType): string => {
     if (
       typeof value === 'number' ||
       typeof value === 'boolean' ||
@@ -131,7 +130,7 @@ export const atomWithSearchParams = <T extends string | number | boolean>(
     throw new Error(`Unsupported value type for key "${key}".`);
   };
 
-  return atom<T, [SetStateAction<T>], void>(
+  return atom<PrimitiveType, [SetStateAction<PrimitiveType>], void>(
     // Read function: Retrieves the current value of the search parameter.
     (get) => {
       const { searchParams } = get(locationAtom);
@@ -145,12 +144,14 @@ export const atomWithSearchParams = <T extends string | number | boolean>(
         // Create a new instance of URLSearchParams to avoid mutating the original.
         const newSearchParams = new URLSearchParams(prev.searchParams);
 
-        let nextValue: T;
+        let nextValue: PrimitiveType;
 
         if (typeof value === 'function') {
           // If the new value is a function, compute it based on the current value.
           const currentValue = resolveValue(newSearchParams.get(key));
-          nextValue = (value as (curr: T) => T)(currentValue);
+          nextValue = (value as (curr: PrimitiveType) => PrimitiveType)(
+            currentValue,
+          );
         } else {
           // Otherwise, use the provided value directly.
           nextValue = value;
