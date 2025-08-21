@@ -5,7 +5,7 @@ import {
   type Options,
   type Location,
 } from './atomWithLocation.js';
-import type { ResolvePrimitive } from './utils/type.js';
+
 import { warning } from './utils/logger.js';
 
 const generateApplyLocation =
@@ -40,21 +40,33 @@ const generateApplyLocation =
  *
  * The atom's read function returns the current value of the search parameter.
  * The atom's write function updates the search parameter in the URL.
- *
- * @param key - The key of the search parameter.
- * @param defaultValue - The default value of the search parameter.
- * @returns A writable atom that manages the search parameter.
  */
-export const atomWithSearchParams = <T extends string | number | boolean>(
+
+// Function overloads for better type safety
+export function atomWithSearchParams(
+  key: string,
+  defaultValue: string,
+  options?: Options<Location>,
+): WritableAtom<string, [SetStateAction<string>], void>;
+
+export function atomWithSearchParams(
+  key: string,
+  defaultValue: number,
+  options?: Options<Location>,
+): WritableAtom<number, [SetStateAction<number>], void>;
+
+export function atomWithSearchParams(
+  key: string,
+  defaultValue: boolean,
+  options?: Options<Location>,
+): WritableAtom<boolean, [SetStateAction<boolean>], void>;
+
+// Implementation
+export function atomWithSearchParams<T extends string | number | boolean>(
   key: string,
   defaultValue: T,
   options?: Options<Location>,
-): WritableAtom<
-  ResolvePrimitive<T>,
-  [SetStateAction<ResolvePrimitive<T>>],
-  void
-> => {
-  type PrimitiveType = ResolvePrimitive<T>;
+): WritableAtom<T, [SetStateAction<T>], void> {
   // Create an atom for managing location state, including search parameters.
   const locationAtom = atomWithLocation({
     ...options,
@@ -67,10 +79,10 @@ export const atomWithSearchParams = <T extends string | number | boolean>(
    * @param value - The raw value from the URL (could be `null` or `undefined`).
    * @returns The resolved value matching the type of `defaultValue`.
    */
-  const resolveValue = (value: string | null | undefined): PrimitiveType => {
+  const resolveValue = (value: string | null | undefined): T => {
     // If the value is null, undefined, or not a string, return the default value.
     if (value === null || value === undefined) {
-      return defaultValue as unknown as PrimitiveType;
+      return defaultValue;
     }
 
     // Determine the type of the default value and parse accordingly.
@@ -79,34 +91,34 @@ export const atomWithSearchParams = <T extends string | number | boolean>(
         warning(
           `Empty string provided for key "${key}". Falling back to default value.`,
         );
-        return defaultValue as unknown as PrimitiveType;
+        return defaultValue;
       }
 
       const parsed = Number(value);
       if (!Number.isNaN(parsed)) {
-        return parsed as PrimitiveType;
+        return parsed as T;
       }
 
       warning(`Expected a number for key "${key}", got "${value}".`);
-      return defaultValue as unknown as PrimitiveType;
+      return defaultValue;
     }
 
     // If the default value is a boolean, check if the value is `true` or `false`.
     if (typeof defaultValue === 'boolean') {
-      if (value === 'true') return true as PrimitiveType;
-      if (value === 'false') return false as PrimitiveType;
+      if (value === 'true') return true as T;
+      if (value === 'false') return false as T;
 
       warning(`Expected a boolean for key "${key}", got "${value}".`);
-      return defaultValue as unknown as PrimitiveType;
+      return defaultValue;
     }
 
     if (typeof defaultValue === 'string') {
-      return value as PrimitiveType;
+      return value as T;
     }
 
     // Fallback to default value for unsupported types
     warning(`Unsupported defaultValue type for key "${key}".`);
-    return defaultValue as unknown as PrimitiveType;
+    return defaultValue;
   };
 
   /**
@@ -117,7 +129,7 @@ export const atomWithSearchParams = <T extends string | number | boolean>(
    * @param value - The value to be serialized.
    * @returns The stringified value.
    */
-  const parseValue = (value: PrimitiveType): string => {
+  const parseValue = (value: T): string => {
     if (
       typeof value === 'number' ||
       typeof value === 'boolean' ||
@@ -130,7 +142,7 @@ export const atomWithSearchParams = <T extends string | number | boolean>(
     throw new Error(`Unsupported value type for key "${key}".`);
   };
 
-  return atom<PrimitiveType, [SetStateAction<PrimitiveType>], void>(
+  return atom<T, [SetStateAction<T>], void>(
     // Read function: Retrieves the current value of the search parameter.
     (get) => {
       const { searchParams } = get(locationAtom);
@@ -144,14 +156,12 @@ export const atomWithSearchParams = <T extends string | number | boolean>(
         // Create a new instance of URLSearchParams to avoid mutating the original.
         const newSearchParams = new URLSearchParams(prev.searchParams);
 
-        let nextValue: PrimitiveType;
+        let nextValue: T;
 
         if (typeof value === 'function') {
           // If the new value is a function, compute it based on the current value.
           const currentValue = resolveValue(newSearchParams.get(key));
-          nextValue = (value as (curr: PrimitiveType) => PrimitiveType)(
-            currentValue,
-          );
+          nextValue = (value as (curr: T) => T)(currentValue);
         } else {
           // Otherwise, use the provided value directly.
           nextValue = value;
@@ -165,4 +175,4 @@ export const atomWithSearchParams = <T extends string | number | boolean>(
       });
     },
   );
-};
+}
