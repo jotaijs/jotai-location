@@ -18,9 +18,9 @@ describe('atomWithSearchParams', () => {
   });
 
   it('handles different value types', async () => {
-    const stringAtom = atomWithSearchParams<string>('string', 'default');
-    const numberAtom = atomWithSearchParams<number>('number', 0);
-    const booleanAtom = atomWithSearchParams<boolean>('boolean', false);
+    const stringAtom = atomWithSearchParams('string', 'default');
+    const numberAtom = atomWithSearchParams('number', 0);
+    const booleanAtom = atomWithSearchParams('boolean', false);
 
     const Navigation = () => {
       const [stringValue, setStringValue] = useAtom(stringAtom);
@@ -72,7 +72,7 @@ describe('atomWithSearchParams', () => {
   });
 
   it('handles function updates', async () => {
-    const searchParamAtom = atomWithSearchParams<number>('count', 0);
+    const searchParamAtom = atomWithSearchParams('count', 0);
 
     const Navigation = () => {
       const [value, setValue] = useAtom(searchParamAtom);
