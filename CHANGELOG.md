@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.6.2] - 2025-08-21
+
+### Changed
+
+- Improve atomWithSearchParams (#53)
+
 ## [0.6.1] - 2025-05-28
 
 ### Changed
