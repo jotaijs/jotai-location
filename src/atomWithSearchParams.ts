@@ -6,37 +6,31 @@ import {
   type Location,
 } from './atomWithLocation.js';
 
-function warning(...data: unknown[]) {
-  if (process.env.NODE_ENV !== 'production') {
-    console.warn(...data);
-  }
-}
-const applyLocation = (
-  location: Location,
-  options?: { replace?: boolean },
-): void => {
-  const url = new URL(window.location.href);
-  if ('pathname' in location) {
-    url.pathname = location.pathname;
-  }
-  if ('searchParams' in location) {
-    const existingParams = new URLSearchParams(url.search);
-    const newParams = location.searchParams;
+import { warning } from './utils/logger.js';
 
-    for (const [key, value] of newParams.entries()) {
-      existingParams.set(key, value);
+const generateApplyLocation =
+  (key: string) =>
+  (location: Location, options?: { replace?: boolean }): void => {
+    const url = new URL(window.location.href);
+    if ('pathname' in location) {
+      url.pathname = location.pathname;
     }
-    url.search = existingParams.toString();
-  }
-  if ('hash' in location) {
-    url.hash = location.hash;
-  }
-  if (options?.replace) {
-    window.history.replaceState(window.history.state, '', url);
-  } else {
-    window.history.pushState(null, '', url);
-  }
-};
+    if ('searchParams' in location) {
+      const existingParams = new URLSearchParams(url.search);
+      const newParams = location.searchParams;
+
+      existingParams.set(key, newParams.get(key) ?? '');
+      url.search = existingParams.toString();
+    }
+    if ('hash' in location) {
+      url.hash = location.hash;
+    }
+    if (options?.replace) {
+      window.history.replaceState(window.history.state, '', url);
+    } else {
+      window.history.pushState(null, '', url);
+    }
+  };
 
 /**
  * Creates an atom that manages a single search parameter.
@@ -46,20 +40,37 @@ const applyLocation = (
  *
  * The atom's read function returns the current value of the search parameter.
  * The atom's write function updates the search parameter in the URL.
- *
- * @param key - The key of the search parameter.
- * @param defaultValue - The default value of the search parameter.
- * @returns A writable atom that manages the search parameter.
  */
-export const atomWithSearchParams = <T extends string | number | boolean>(
+
+// Function overloads for better type safety
+export function atomWithSearchParams(
+  key: string,
+  defaultValue: string,
+  options?: Options<Location>,
+): WritableAtom<string, [SetStateAction<string>], void>;
+
+export function atomWithSearchParams(
+  key: string,
+  defaultValue: number,
+  options?: Options<Location>,
+): WritableAtom<number, [SetStateAction<number>], void>;
+
+export function atomWithSearchParams(
+  key: string,
+  defaultValue: boolean,
+  options?: Options<Location>,
+): WritableAtom<boolean, [SetStateAction<boolean>], void>;
+
+// Implementation
+export function atomWithSearchParams<T extends string | number | boolean>(
   key: string,
   defaultValue: T,
   options?: Options<Location>,
-): WritableAtom<T, [SetStateAction<T>], void> => {
+): WritableAtom<T, [SetStateAction<T>], void> {
   // Create an atom for managing location state, including search parameters.
   const locationAtom = atomWithLocation({
     ...options,
-    applyLocation: options?.applyLocation ?? applyLocation,
+    applyLocation: options?.applyLocation ?? generateApplyLocation(key),
   });
 
   /**
@@ -164,4 +175,4 @@ export const atomWithSearchParams = <T extends string | number | boolean>(
       });
     },
   );
-};
+}

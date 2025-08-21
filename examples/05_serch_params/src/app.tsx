@@ -1,9 +1,9 @@
 import { atomWithSearchParams } from 'jotai-location';
 import { useAtom } from 'jotai/react';
 
-const oneAtom = atomWithSearchParams<number>('one', 0);
-const twoAtom = atomWithSearchParams<number>('two', 0);
-const threeAtom = atomWithSearchParams<number>('three', 0);
+const oneAtom = atomWithSearchParams('one', 0);
+const twoAtom = atomWithSearchParams('two', 0);
+const threeAtom = atomWithSearchParams('three', 0);
 
 const Page = () => {
   const [one, setOne] = useAtom(oneAtom);
