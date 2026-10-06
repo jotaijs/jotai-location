@@ -11,19 +11,15 @@ import { warning } from './utils/logger.js';
 const generateApplyLocation =
   (key: string) =>
   (location: Location, options?: { replace?: boolean }): void => {
+    // Start from the live URL and only touch `key`. The location snapshot may
+    // be stale, e.g. after `history.replaceState`, which does not fire popstate.
     const url = new URL(window.location.href);
-    if ('pathname' in location) {
-      url.pathname = location.pathname;
-    }
     if ('searchParams' in location) {
       const existingParams = new URLSearchParams(url.search);
       const newParams = location.searchParams;
 
       existingParams.set(key, newParams.get(key) ?? '');
       url.search = existingParams.toString();
-    }
-    if ('hash' in location) {
-      url.hash = location.hash;
     }
     if (options?.replace) {
       window.history.replaceState(window.history.state, '', url);

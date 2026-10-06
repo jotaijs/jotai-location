@@ -100,4 +100,35 @@ describe('atomWithSearchParams', () => {
     await screen.findByText('current searchParam in atomWithSearchParams: 2');
     expect(window.location.search).toContain('count=2');
   });
+
+  it('preserves hash and pathname changed outside the atom', async () => {
+    const searchParamAtom = atomWithSearchParams('count', 0);
+
+    const Navigation = () => {
+      const [value, setValue] = useAtom(searchParamAtom);
+      return (
+        <>
+          <div>current searchParam in atomWithSearchParams: {value}</div>
+          <button type="button" onClick={() => setValue((prev) => prev + 1)}>
+            increment
+          </button>
+        </>
+      );
+    };
+
+    render(
+      <StrictMode>
+        <Navigation />
+      </StrictMode>,
+    );
+
+    // history.replaceState does not fire popstate, so the atom does not observe this
+    window.history.replaceState(null, '', '/other#section');
+
+    await userEvent.click(await screen.findByText('increment'));
+    await screen.findByText('current searchParam in atomWithSearchParams: 1');
+    expect(window.location.search).toContain('count=1');
+    expect(window.location.pathname).toBe('/other');
+    expect(window.location.hash).toBe('#section');
+  });
 });
